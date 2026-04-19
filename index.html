@@ -4,748 +4,512 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>宿題サポーター</title>
-<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Kaisei+Decol:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f0f4ff;--card:#fff;--dark:#1a1a2e;--mid:#6b7280;--light:#e5e7eb;
-  --c:#f59e0b;--cl:#fffbeb;--cd:#92400e;--radius:22px;
+  --bg:#f0f2f8;--card:#fff;
+  --accent:#4f7cff;--accent2:#7c4fff;--accent-light:#eef1ff;
+  --green:#00c48c;--red:#ff4b4b;--orange:#ff9f43;
+  --dark:#1a1d2e;--label:#3d4152;--sub:#8b8fa8;
+  --border:rgba(79,124,255,.1);
+  --shadow-sm:0 2px 8px rgba(79,124,255,.08);
+  --shadow:0 8px 24px rgba(79,124,255,.12);
+  --shadow-lg:0 16px 48px rgba(79,124,255,.16);
+  --radius:20px;--radius-sm:12px;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-body{font-family:'Zen Maru Gothic',sans-serif;background:var(--bg);min-height:100vh;color:var(--dark);overflow-x:hidden;}
-.screen{display:none;min-height:100vh;flex-direction:column;padding-bottom:74px;}
-#s-boot{padding-bottom:0 !important;}
-.screen.active{display:flex;animation:slideIn .35s cubic-bezier(.34,1.2,.64,1) forwards;}
-@keyframes slideIn{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:translateX(0)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-@keyframes bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}60%{transform:translateY(-5px)}}
-@keyframes dotBlink{0%,80%,100%{transform:scale(.5);opacity:.3}40%{transform:scale(1);opacity:1}}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
-@keyframes starPop{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-70px);opacity:0}}
+body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);min-height:100vh;color:var(--dark);overflow-x:hidden;-webkit-font-smoothing:antialiased;}
+
+.screen{display:none;min-height:100vh;flex-direction:column;padding-bottom:84px;}
+.screen.active{display:flex;animation:fadeUp .3s cubic-bezier(.22,1,.36,1) forwards;}
+#s-boot,#s-chat{padding-bottom:0!important;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes blink{0%,80%,100%{transform:scale(.5);opacity:.3}40%{transform:scale(1);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes starPop{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-72px) scale(.2);opacity:0}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+@keyframes scaleIn{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* ── BOOT SCREEN ── */
-#s-boot{background:linear-gradient(160deg,#667eea,#764ba2);align-items:center;justify-content:center;text-align:center;padding:2rem;}
-.boot-icon{font-size:72px;animation:bounce 1.5s infinite;margin-bottom:1rem;}
-.boot-title{font-family:'Kaisei Decol',serif;font-size:26px;color:#fff;margin-bottom:.5rem;}
-.boot-sub{font-size:13px;color:rgba(255,255,255,.8);line-height:1.7;margin-bottom:2rem;}
-.prog-wrap{width:100%;max-width:320px;margin:0 auto 1rem;}
-.prog-bg{height:10px;background:rgba(255,255,255,.2);border-radius:5px;overflow:hidden;margin-bottom:8px;}
-.prog-fill{height:100%;background:linear-gradient(90deg,#ffd54f,#ffb300);border-radius:5px;width:0%;transition:width .4s ease;}
-.prog-text{font-size:13px;color:rgba(255,255,255,.85);font-weight:700;}
-.boot-steps{margin-top:1.5rem;display:flex;flex-direction:column;gap:8px;width:100%;max-width:320px;}
-.bstep{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.1);border-radius:12px;padding:10px 14px;font-size:13px;color:rgba(255,255,255,.7);}
-.bstep.done{background:rgba(255,255,255,.2);color:#fff;}
-.bstep.active{background:rgba(255,255,255,.25);color:#fff;animation:pulse 1s infinite;}
-.bstep-icon{font-size:16px;flex-shrink:0;}
-.boot-note{background:rgba(255,255,255,.12);border-radius:16px;padding:1rem 1.25rem;margin-top:1.5rem;width:100%;max-width:320px;font-size:12px;color:rgba(255,255,255,.75);line-height:1.8;text-align:left;}
+/* BOOT */
+#s-boot{
+  align-items:center;justify-content:center;text-align:center;padding:2.5rem 2rem;
+  background:linear-gradient(160deg,#1a1d2e 0%,#252945 50%,#1e2240 100%);
+  position:relative;overflow:hidden;
+}
+#s-boot::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 30% 20%,rgba(79,124,255,.2) 0%,transparent 60%),
+             radial-gradient(ellipse at 70% 80%,rgba(124,79,255,.15) 0%,transparent 60%);
+  pointer-events:none;}
+.boot-char{font-size:80px;animation:floatY 3s ease-in-out infinite;display:block;margin-bottom:1.25rem;filter:drop-shadow(0 8px 24px rgba(79,124,255,.4));}
+.boot-title{font-family:'Outfit',sans-serif;font-size:26px;font-weight:800;color:#fff;margin-bottom:6px;letter-spacing:-.3px;}
+.boot-sub{font-size:14px;color:rgba(255,255,255,.5);line-height:1.7;margin-bottom:2.5rem;}
+.prog-wrap{width:100%;max-width:260px;margin:0 auto 1rem;}
+.prog-track{height:3px;background:rgba(255,255,255,.1);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;width:0%;transition:width .5s cubic-bezier(.22,1,.36,1);}
+.prog-txt{font-size:13px;color:rgba(255,255,255,.4);font-weight:500;}
+.boot-steps{width:100%;max-width:260px;display:flex;flex-direction:column;gap:8px;margin-top:1.75rem;}
+.bstep{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);font-size:13px;color:rgba(255,255,255,.4);font-weight:500;transition:all .3s;}
+.bstep.done{color:rgba(255,255,255,.8);background:rgba(79,124,255,.12);border-color:rgba(79,124,255,.2);}
+.bstep.active{color:#fff;background:rgba(79,124,255,.2);border-color:rgba(79,124,255,.35);animation:pulse 2s infinite;}
+.bstep-ic{font-size:15px;flex-shrink:0;width:20px;text-align:center;}
+.boot-note{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius-sm);padding:1rem 1.25rem;margin-top:1.5rem;width:100%;max-width:260px;font-size:12px;color:rgba(255,255,255,.35);line-height:2;text-align:left;}
 
-/* ── SHARED NAV ── */
-.nav-bar{display:flex;align-items:center;gap:10px;padding:.9rem 1.25rem;background:var(--card);border-bottom:1.5px solid var(--light);box-shadow:0 2px 10px rgba(0,0,0,.05);position:sticky;top:0;z-index:20;flex-shrink:0;}
-.btn-back{width:40px;height:40px;border-radius:12px;border:1.5px solid var(--light);background:var(--card);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.btn-back:active{background:var(--light);}
-.nav-title{font-size:15px;font-weight:700;flex:1;}
-.btn-sm{padding:7px 12px;border-radius:10px;border:1.5px solid var(--light);background:var(--card);font-family:'Zen Maru Gothic',sans-serif;font-size:12px;font-weight:700;color:var(--mid);cursor:pointer;white-space:nowrap;}
+/* NAV */
+.nav-bar{display:flex;align-items:center;gap:10px;padding:1rem 1.25rem;background:rgba(240,242,248,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(79,124,255,.08);position:sticky;top:0;z-index:20;flex-shrink:0;}
+.nav-title{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;flex:1;color:var(--dark);letter-spacing:-.2px;}
+.btn-back{background:none;border:none;color:var(--accent);font-size:16px;font-weight:600;cursor:pointer;padding:4px 0;display:flex;align-items:center;gap:4px;flex-shrink:0;font-family:'Noto Sans JP',sans-serif;}
+.btn-nav-txt{background:none;border:none;color:var(--accent);font-size:15px;font-weight:600;cursor:pointer;padding:4px 0;font-family:'Noto Sans JP',sans-serif;white-space:nowrap;}
 
-/* ── UPLOAD ── */
+/* UPLOAD */
 #s-upload{background:var(--bg);}
-.upload-body{flex:1;overflow-y:auto;padding:1.25rem;}
-.ai-bar{display:flex;align-items:center;gap:10px;background:var(--cl);border:1.5px solid var(--c);border-radius:14px;padding:.875rem 1.1rem;margin-bottom:1.25rem;font-size:13px;color:var(--cd);}
-.ai-dot{width:10px;height:10px;border-radius:50%;background:#10b981;flex-shrink:0;animation:pulse 2s infinite;}
-.ai-dot.warn{background:#f59e0b;}
-.teacher-wrap{border-radius:18px;padding:1.1rem 1.25rem;display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;background:var(--cl);border:1.5px solid var(--c)40;box-shadow:0 4px 16px rgba(0,0,0,.07);}
-.t-name{font-size:15px;font-weight:700;color:var(--cd);margin-bottom:3px;}
-.t-msg{font-size:13px;line-height:1.6;color:var(--cd);opacity:.85;}
-.drop-zone{border:3px dashed var(--c);border-radius:18px;padding:2.25rem 1.25rem;text-align:center;background:var(--cl);cursor:pointer;position:relative;margin-bottom:1.25rem;animation:pulse 3s infinite;}
-.drop-zone.drag{transform:scale(1.01);}
+.upload-body{flex:1;overflow-y:auto;padding:1.25rem;-webkit-overflow-scrolling:touch;}
+
+/* Hero */
+.hero-card{background:linear-gradient(135deg,#4f7cff 0%,#7c4fff 100%);border-radius:var(--radius);padding:1.5rem 1.25rem;margin-bottom:1.25rem;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:16px;position:relative;overflow:hidden;}
+.hero-card::before{content:'';position:absolute;top:-30px;right:-20px;width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.08);}
+.hero-card::after{content:'';position:absolute;bottom:-40px;right:20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.05);}
+.char-wrap{flex-shrink:0;position:relative;z-index:1;}
+.char-ring{width:84px;height:84px;background:rgba(255,255,255,.15);border-radius:50%;display:flex;align-items:center;justify-content:center;animation:floatY 4s ease-in-out infinite;border:3px solid rgba(255,255,255,.25);}
+.hero-info{flex:1;position:relative;z-index:1;}
+.hero-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:#fff;margin-bottom:7px;}
+.hero-name{font-family:'Outfit',sans-serif;font-size:22px;font-weight:800;color:#fff;margin-bottom:5px;letter-spacing:-.2px;}
+.hero-msg{font-size:13px;color:rgba(255,255,255,.85);line-height:1.6;}
+
+/* Status */
+.status-pill{display:inline-flex;align-items:center;gap:6px;background:var(--card);border-radius:30px;padding:7px 14px;margin-bottom:1.25rem;box-shadow:var(--shadow-sm);font-size:13px;font-weight:600;color:var(--label);border:1px solid var(--border);}
+.s-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;animation:pulse 2s infinite;}
+.s-dot.warn{background:var(--orange);}
+
+/* Drop */
+.drop-zone{background:var(--card);border-radius:var(--radius);border:2px dashed rgba(79,124,255,.25);padding:2.5rem 1.5rem;text-align:center;cursor:pointer;position:relative;margin-bottom:1.25rem;transition:all .2s;box-shadow:var(--shadow-sm);}
+.drop-zone.drag{border-color:var(--accent);background:#f4f6ff;}
 .drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0;}
-.drop-cam{font-size:48px;animation:bounce 2s infinite;display:block;margin-bottom:10px;}
-.drop-title{font-size:15px;font-weight:700;color:var(--cd);margin-bottom:3px;}
-.drop-sub{font-size:12px;color:var(--mid);}
-.preview-sec{display:none;margin-bottom:1rem;}
-.preview-img{width:100%;max-height:220px;object-fit:contain;border-radius:14px;border:2px solid var(--light);display:block;background:#f8f8f8;}
+.drop-icon-box{width:64px;height:64px;border-radius:18px;background:linear-gradient(135deg,var(--accent-light),#e8ecff);border:1.5px solid rgba(79,124,255,.15);display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 14px;box-shadow:0 4px 12px rgba(79,124,255,.1);}
+.drop-title{font-family:'Outfit',sans-serif;font-size:18px;font-weight:700;color:var(--accent);margin-bottom:5px;}
+.drop-sub{font-size:13px;color:var(--sub);}
 
-/* OCR result box */
-.ocr-box{background:var(--card);border:2px solid var(--c);border-radius:16px;padding:1rem 1.25rem;margin-top:10px;}
-.ocr-label{font-size:12px;font-weight:700;color:var(--cd);letter-spacing:.08em;margin-bottom:8px;}
-.ocr-text{width:100%;min-height:60px;border:1.5px solid var(--light);border-radius:10px;padding:10px;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;color:var(--dark);background:var(--bg);outline:none;resize:none;line-height:1.6;}
-.ocr-text:focus{border-color:var(--c);}
-.ocr-actions{display:flex;gap:8px;margin-top:10px;}
-.btn-primary{flex:1;padding:14px;border-radius:14px;border:none;font-family:'Zen Maru Gothic',sans-serif;font-size:15px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--c),var(--cd));box-shadow:0 4px 0 var(--cd);transition:transform .12s;display:flex;align-items:center;justify-content:center;gap:6px;}
-.btn-primary:active{transform:translateY(3px);box-shadow:0 1px 0 var(--cd);}
-.btn-secondary{padding:14px 16px;border-radius:14px;border:2px solid var(--light);background:var(--card);font-family:'Zen Maru Gothic',sans-serif;font-size:14px;font-weight:700;color:var(--mid);cursor:pointer;}
+/* Preview */
+.preview-sec{display:none;margin-bottom:1.25rem;}
+.preview-img{width:100%;max-height:220px;object-fit:contain;border-radius:var(--radius);border:1.5px solid var(--border);display:block;background:#f8f9ff;box-shadow:var(--shadow-sm);}
+.preview-actions{display:flex;gap:8px;margin-top:10px;}
 
-/* OCR processing overlay */
-.ocr-overlay{position:fixed;inset:0;background:rgba(255,255,255,.9);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
-.ocr-overlay.show{display:flex;}
-.ocr-spin{font-size:52px;animation:bounce .8s infinite;}
-.ocr-bar-wrap{width:200px;height:8px;background:var(--light);border-radius:4px;overflow:hidden;}
-.ocr-bar{height:100%;background:linear-gradient(90deg,var(--c),var(--cd),var(--c));background-size:200% 100%;animation:shimmer 1.5s infinite;border-radius:4px;}
-.ocr-msg{font-size:15px;font-weight:700;color:var(--c);}
+/* OCR */
+.ocr-card{background:var(--card);border-radius:var(--radius);border:1.5px solid var(--border);padding:1.25rem;margin-top:10px;box-shadow:var(--shadow-sm);display:none;}
+.ocr-lbl{font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.06em;margin-bottom:9px;display:flex;align-items:center;gap:6px;text-transform:uppercase;}
+.ocr-ta{width:100%;min-height:76px;border:1.5px solid rgba(79,124,255,.15);border-radius:var(--radius-sm);padding:12px 14px;font-family:'Noto Sans JP',sans-serif;font-size:16px;color:var(--dark);background:#f8f9ff;outline:none;resize:none;line-height:1.65;transition:border-color .2s,background .2s;}
+.ocr-ta:focus{border-color:var(--accent);background:#fff;}
+.ocr-acts{display:flex;gap:8px;margin-top:10px;}
 
-/* ── CHAT ── */
-#s-chat{background:#f0f4ff;}
-.chat-messages{flex:1;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:10px;}
+/* Buttons */
+.btn-p{flex:1;padding:15px 18px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:700;cursor:pointer;transition:opacity .15s,transform .1s;display:flex;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 16px rgba(79,124,255,.3);letter-spacing:.02em;}
+.btn-p:active{opacity:.85;transform:scale(.98);}
+.btn-s{padding:15px 16px;border-radius:var(--radius-sm);border:1.5px solid rgba(79,124,255,.2);background:var(--card);font-family:'Noto Sans JP',sans-serif;font-size:16px;font-weight:600;color:var(--accent);cursor:pointer;transition:all .15s;box-shadow:var(--shadow-sm);}
+.btn-s:active{opacity:.7;}
+.btn-ic{width:50px;height:50px;border-radius:var(--radius-sm);border:1.5px solid rgba(0,0,0,.07);background:var(--card);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow-sm);}
+
+/* OCR overlay */
+.ocr-ov{position:fixed;inset:0;background:rgba(240,242,248,.9);backdrop-filter:blur(12px);z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.ocr-ov.show{display:flex;}
+.ocr-sp{font-size:52px;animation:spin 1.2s linear infinite;}
+.ocr-pg-wrap{width:200px;height:3px;background:rgba(79,124,255,.15);border-radius:2px;overflow:hidden;}
+.ocr-pg-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent));background-size:200% 100%;animation:shimmer 1.5s infinite;}
+.ocr-msg{font-size:14px;font-weight:600;color:var(--label);}
+
+/* CHAT */
+#s-chat{background:var(--bg);}
+.chat-nav{background:rgba(240,242,248,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(79,124,255,.08);padding:.875rem 1.25rem;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;flex-shrink:0;}
+.chat-av{width:36px;height:36px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;box-shadow:0 2px 8px rgba(79,124,255,.3);}
+.chat-tname{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--dark);}
+.chat-tst{font-size:11px;color:var(--green);font-weight:600;}
+
+.chat-messages{flex:1;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + 130px);display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
 .chat-messages::-webkit-scrollbar{width:3px;}
-.chat-messages::-webkit-scrollbar-thumb{background:#ddd;border-radius:2px;}
-.msg{display:flex;gap:8px;align-items:flex-end;animation:fadeUp .3s ease;}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(79,124,255,.2);border-radius:2px;}
+
+.msg{display:flex;gap:10px;align-items:flex-end;animation:scaleIn .2s ease;}
 .msg.user{flex-direction:row-reverse;}
-.msg-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:var(--cl);border:1.5px solid var(--c)40;}
-.bubble{max-width:82%;padding:11px 15px;font-size:14px;line-height:1.8;box-shadow:0 2px 8px rgba(0,0,0,.07);}
-.msg.ai  .bubble{border-radius:4px 17px 17px 17px;background:var(--card);color:var(--dark);border:1.5px solid var(--light);}
-.msg.user .bubble{border-radius:17px 4px 17px 17px;color:#fff;background:linear-gradient(135deg,var(--c),var(--cd));}
-.step-tag{display:inline-block;color:#fff;background:var(--c);border-radius:7px;padding:2px 10px;font-size:11px;font-weight:700;margin-bottom:4px;}
-.step-box{background:var(--cl);border-left:3px solid var(--c);border-radius:0 12px 12px 0;padding:9px 12px;margin:5px 0;font-size:13px;line-height:1.75;}
-.ans-box{background:#f0fdf4;border:1.5px solid #86efac;border-radius:12px;padding:10px 13px;margin:5px 0;font-size:14px;font-weight:700;color:#166534;}
-.point-box{background:var(--cl);border:1.5px solid #fcd34d;border-radius:12px;padding:9px 13px;margin:5px 0;font-size:13px;color:var(--cd);}
-.typing-msg{display:flex;gap:8px;align-items:flex-end;}
-.typing-bubble{padding:13px 17px;background:var(--card);border-radius:4px 17px 17px 17px;border:1.5px solid var(--light);display:flex;gap:5px;align-items:center;}
-.tdot{width:7px;height:7px;border-radius:50%;background:var(--c);animation:dotBlink 1.2s infinite;}
-.tdot:nth-child(2){animation-delay:.2s}.tdot:nth-child(3){animation-delay:.4s}
-.chat-footer{padding:.75rem 1rem 1.25rem;background:var(--card);border-top:1.5px solid var(--light);box-shadow:0 -2px 12px rgba(0,0,0,.05);flex-shrink:0;}
-.save-row{margin-bottom:.75rem;}
-.btn-save{width:100%;padding:10px;border-radius:12px;border:none;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,#ef4444,#dc2626);display:none;align-items:center;justify-content:center;gap:5px;}
+.msg-av{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 2px 8px rgba(79,124,255,.25);}
+.msg-av-u{width:34px;height:34px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#f0f2f8,#e4e8f8);border:1.5px solid rgba(79,124,255,.15);display:flex;align-items:center;justify-content:center;font-size:17px;}
+.bubble{max-width:82%;padding:14px 18px;font-size:16px;line-height:1.8;border-radius:4px 18px 18px 18px;}
+.msg.ai .bubble{background:var(--card);color:var(--dark);border:1px solid rgba(79,124,255,.1);box-shadow:0 2px 12px rgba(79,124,255,.08);}
+.msg.user .bubble{border-radius:18px 4px 18px 18px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;box-shadow:0 4px 16px rgba(79,124,255,.3);}
+
+.step-box{background:linear-gradient(135deg,#f4f6ff,#eef1ff);border-left:3px solid var(--accent);border-radius:0 12px 12px 0;padding:12px 14px;margin:7px 0;font-size:15px;line-height:1.8;}
+.step-tag{display:inline-flex;align-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border-radius:6px;padding:3px 11px;font-size:12px;font-weight:700;margin-bottom:6px;letter-spacing:.04em;box-shadow:0 2px 6px rgba(79,124,255,.3);}
+.ans-box{background:linear-gradient(135deg,#f0fff8,#e6fff3);border:1.5px solid rgba(0,196,140,.3);border-radius:12px;padding:14px 16px;margin:7px 0;font-size:16px;font-weight:700;color:#007a57;box-shadow:0 2px 8px rgba(0,196,140,.1);}
+.point-box{background:linear-gradient(135deg,#fffbf0,#fff5e0);border:1.5px solid rgba(255,159,67,.3);border-radius:12px;padding:12px 15px;margin:7px 0;font-size:15px;color:#b86800;box-shadow:0 2px 8px rgba(255,159,67,.08);}
+
+.typing-msg{display:flex;gap:10px;align-items:flex-end;}
+.typing-bub{padding:14px 18px;background:var(--card);border-radius:4px 18px 18px 18px;border:1px solid rgba(79,124,255,.1);box-shadow:0 2px 12px rgba(79,124,255,.08);display:flex;gap:5px;align-items:center;}
+.tdot{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1.2s infinite;}
+.tdot:nth-child(2){animation-delay:.2s;background:var(--accent2);}
+.tdot:nth-child(3){animation-delay:.4s;}
+
+.chat-footer{position:fixed;bottom:0;left:0;right:0;z-index:30;background:rgba(240,242,248,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(79,124,255,.08);padding:.875rem 1rem calc(.875rem + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(79,124,255,.06);}
+.btn-save{width:100%;padding:11px;border-radius:var(--radius-sm);border:none;background:linear-gradient(135deg,var(--red),#c0392b);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:14px;font-weight:700;cursor:pointer;display:none;align-items:center;justify-content:center;gap:5px;margin-bottom:8px;box-shadow:0 3px 12px rgba(255,75,75,.2);}
 .chat-row{display:flex;gap:8px;align-items:flex-end;}
-.chat-ta{flex:1;padding:11px 15px;border-radius:14px;border:2px solid var(--light);font-family:'Zen Maru Gothic',sans-serif;font-size:15px;resize:none;outline:none;max-height:110px;transition:border-color .2s;color:var(--dark);line-height:1.5;background:var(--bg);}
-.chat-ta:focus{border-color:var(--c);background:#fff;}
-.btn-send{width:48px;height:48px;border-radius:50%;border:none;flex-shrink:0;color:#fff;font-size:18px;cursor:pointer;background:linear-gradient(135deg,var(--c),var(--cd));box-shadow:0 4px 12px rgba(245,158,11,.3);transition:transform .12s;display:flex;align-items:center;justify-content:center;}
-.btn-send:active{transform:scale(.9);}
-.btn-send:disabled{opacity:.4;cursor:not-allowed;}
+.chat-ta{flex:1;padding:13px 16px;border-radius:22px;border:1.5px solid rgba(79,124,255,.2);background:var(--card);font-family:'Noto Sans JP',sans-serif;font-size:16px;resize:none;outline:none;max-height:120px;color:var(--dark);line-height:1.5;transition:border-color .2s,box-shadow .2s;box-shadow:var(--shadow-sm);}
+.chat-ta:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(79,124,255,.1);}
+.btn-send{width:46px;height:46px;border-radius:50%;border:none;flex-shrink:0;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-size:18px;cursor:pointer;box-shadow:0 4px 16px rgba(79,124,255,.35);transition:transform .1s;display:flex;align-items:center;justify-content:center;}
+.btn-send:disabled{opacity:.35;cursor:not-allowed;box-shadow:none;}
+.btn-send:active{transform:scale(.92);}
 
-/* ── GLOBAL TAB ── */
-.global-tab{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;background:var(--card);border-top:1.5px solid var(--light);padding:.5rem .5rem calc(.5rem + env(safe-area-inset-bottom));box-shadow:0 -2px 12px rgba(0,0,0,.07);}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:none;background:transparent;cursor:pointer;border-radius:12px;font-family:'Zen Maru Gothic',sans-serif;}
-.tab-btn:active{background:var(--light);}
-.tab-icon{font-size:22px;}
-.tab-label{font-size:10px;font-weight:700;color:var(--mid);}
-.tab-btn.active .tab-label{color:var(--c);}
+/* GLOBAL TAB */
+.global-tab{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:50;background:rgba(240,242,248,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid rgba(79,124,255,.08);padding:.5rem .5rem calc(.5rem + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(79,124,255,.06);}
+.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 4px;border:none;background:transparent;cursor:pointer;border-radius:var(--radius-sm);font-family:'Noto Sans JP',sans-serif;transition:background .15s;}
+.tab-btn:active{background:rgba(79,124,255,.08);}
+.tab-icon{font-size:23px;transition:transform .2s;}
+.tab-label{font-size:11px;font-weight:600;color:var(--sub);}
+.tab-btn.active .tab-label{color:var(--accent);}
+.tab-btn.active .tab-icon{transform:scale(1.1);}
 
-/* ── MISTAKES / PARENT ── */
-#s-mistakes,#s-parent{background:var(--bg);}
-.page-body{flex:1;overflow-y:auto;padding:1rem;}
-.empty-state{text-align:center;padding:3rem 1.5rem;color:var(--mid);}
-.empty-icon{font-size:56px;margin-bottom:1rem;display:block;animation:float 3s infinite;}
-.mistake-card{background:var(--card);border-radius:16px;border:1.5px solid var(--light);padding:1rem 1.25rem;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+/* MISTAKES */
+#s-mistakes{background:var(--bg);}
+.page-body{flex:1;overflow-y:auto;padding:1rem 1.25rem;-webkit-overflow-scrolling:touch;}
+.empty-state{text-align:center;padding:4rem 1.5rem;color:var(--sub);}
+.empty-icon{font-size:56px;margin-bottom:1rem;display:block;animation:floatY 4s ease-in-out infinite;opacity:.6;}
+.empty-txt{font-size:15px;font-weight:500;line-height:1.9;}
+.mistake-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:1.125rem 1.25rem;margin-bottom:10px;box-shadow:var(--shadow-sm);}
 .mk-hd{display:flex;align-items:center;gap:8px;margin-bottom:.6rem;}
-.mk-badge{padding:3px 10px;border-radius:10px;font-size:11px;font-weight:700;background:var(--cl);color:var(--cd);border:1px solid var(--c)40;}
-.mk-date{font-size:11px;color:var(--mid);margin-left:auto;}
-.mk-q{font-size:14px;font-weight:700;margin-bottom:.5rem;line-height:1.6;}
-.mk-ans{font-size:13px;color:var(--mid);margin-bottom:.75rem;line-height:1.6;}
+.mk-badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--accent-light);color:var(--accent);}
+.mk-rv{font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;background:#e6fff3;color:#007a57;}
+.mk-date{font-size:11px;color:var(--sub);margin-left:auto;}
+.mk-q{font-size:15px;font-weight:600;margin-bottom:.75rem;line-height:1.6;color:var(--dark);}
 .mk-acts{display:flex;gap:8px;}
-.btn-review{flex:1;padding:9px;border-radius:10px;border:none;font-family:'Zen Maru Gothic',sans-serif;font-size:13px;font-weight:700;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--c),var(--cd));}
-.btn-del-mk{width:38px;height:38px;border-radius:10px;border:1.5px solid #fca5a5;background:#fff5f5;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
-.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:1.25rem;}
-.stat-card{background:var(--card);border-radius:16px;padding:1rem;border:1.5px solid var(--light);}
-.stat-icon{font-size:24px;margin-bottom:6px;}
-.stat-num{font-size:26px;font-weight:700;color:var(--c);margin-bottom:2px;}
-.stat-label{font-size:11px;color:var(--mid);}
-.parent-hero{background:linear-gradient(135deg,#1e293b,#334155);border-radius:20px;padding:1.5rem;margin-bottom:1.25rem;color:#fff;text-align:center;}
-.parent-hero h2{font-family:'Kaisei Decol',serif;font-size:20px;margin-bottom:4px;}
-.parent-hero p{font-size:12px;opacity:.75;}
-.sec-head{font-size:12px;font-weight:700;color:var(--mid);letter-spacing:.1em;margin-bottom:.75rem;}
-.recent-item{background:var(--card);border-radius:12px;padding:.875rem 1.1rem;border:1.5px solid var(--light);display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+
+/* PARENT */
+#s-parent{background:var(--bg);}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:1rem 1.25rem;}
+.stat-card{background:var(--card);border-radius:var(--radius);padding:1.125rem 1rem;border:1px solid var(--border);box-shadow:var(--shadow-sm);animation:scaleIn .3s ease backwards;}
+.stat-card:nth-child(1){animation-delay:.05s}.stat-card:nth-child(2){animation-delay:.1s}.stat-card:nth-child(3){animation-delay:.15s}.stat-card:nth-child(4){animation-delay:.2s}
+.stat-icon{font-size:24px;margin-bottom:8px;display:block;}
+.stat-num{font-family:'Outfit',sans-serif;font-size:30px;font-weight:800;color:var(--accent);margin-bottom:3px;letter-spacing:-.5px;}
+.stat-label{font-size:12px;color:var(--sub);font-weight:600;}
+.sec-head{font-size:12px;font-weight:700;color:var(--sub);letter-spacing:.08em;text-transform:uppercase;padding:.75rem 1.25rem .5rem;}
+.recent-list{padding:0 1.25rem 1rem;display:flex;flex-direction:column;gap:8px;}
+.recent-item{background:var(--card);border-radius:var(--radius-sm);padding:.875rem 1rem;border:1px solid var(--border);display:flex;align-items:center;gap:10px;box-shadow:var(--shadow-sm);}
+.ri-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.ri-q{flex:1;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dark);}
+.ri-date{font-size:11px;color:var(--sub);flex-shrink:0;}
 
 .star-float{position:fixed;pointer-events:none;z-index:9999;animation:starPop 1s ease forwards;font-size:20px;}
 </style>
 </head>
 <body>
 
-<!-- ══ BOOT ══ -->
+<!-- BOOT -->
 <div class="screen active" id="s-boot">
-  <div class="boot-icon">🤖</div>
-  <div class="boot-title">AI先生を起動中…</div>
-  <div class="boot-sub">初回のみダウンロードが必要です<br>Wi-Fiでの実行をおすすめします</div>
+  <span class="boot-char">🤖</span>
+  <div class="boot-title">宿題サポーター</div>
+  <div class="boot-sub">AI先生が起動するまでお待ちください<br>初回のみ時間がかかります</div>
   <div class="prog-wrap">
-    <div class="prog-bg"><div class="prog-fill" id="progFill"></div></div>
-    <div class="prog-text" id="progText">準備中...</div>
+    <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-txt" id="progTxt">準備中...</div>
   </div>
   <div class="boot-steps">
-    <div class="bstep active" id="bstep0"><span class="bstep-icon">⏳</span>文字認識エンジン（OCR）を読み込み中</div>
-    <div class="bstep" id="bstep1"><span class="bstep-icon">⭕</span>AIモデルを読み込み中</div>
-    <div class="bstep" id="bstep2"><span class="bstep-icon">⭕</span>ケイ先生の準備完了！</div>
+    <div class="bstep active" id="bstep0"><span class="bstep-ic">⏳</span>文字認識エンジンを準備中</div>
+    <div class="bstep" id="bstep1"><span class="bstep-ic">○</span>AIモデルを読み込み中</div>
+    <div class="bstep" id="bstep2"><span class="bstep-ic">○</span>起動完了</div>
   </div>
   <div class="boot-note">
-    ⚠️ 初回のみ約3〜5分かかります<br>
-    📶 Wi-Fi接続を強く推奨します<br>
+    ⚠️ 初回のみ3〜5分かかります<br>
+    📶 Wi-Fi接続を推奨します<br>
     🔋 充電しながらの使用を推奨します<br>
-    ✅ 2回目以降は数秒で起動します
+    ✅ 2回目以降はすぐ起動します
   </div>
 </div>
 
-<!-- ══ UPLOAD ══ -->
+<!-- UPLOAD -->
 <div class="screen" id="s-upload">
   <div class="nav-bar">
-    <div style="font-size:22px">🧮</div>
-    <div class="nav-title">数学 宿題サポーター</div>
+    <div class="nav-title">宿題サポーター</div>
   </div>
   <div class="upload-body">
-    <div class="ai-bar">
-      <div class="ai-dot" id="aiDot"></div>
-      <div id="aiBarText">AI先生 オンライン（完全オフライン動作）</div>
+    <div class="status-pill">
+      <div class="s-dot" id="aiDot"></div>
+      <span id="aiBarTxt" style="font-size:14px;font-weight:600">AI先生 オンライン（完全オフライン動作）</span>
     </div>
-    <div class="teacher-wrap">
-      <svg width="60" height="60" viewBox="0 0 60 60" style="flex-shrink:0;animation:float 3s ease-in-out infinite">
-        <circle cx="30" cy="30" r="28" fill="#fde68a" stroke="#f59e0b" stroke-width="2.5"/>
-        <circle cx="22" cy="26" r="3.5" fill="#92400e" opacity=".8"/>
-        <circle cx="38" cy="26" r="3.5" fill="#92400e" opacity=".8"/>
-        <circle cx="23" cy="25" r="1.2" fill="white"/>
-        <circle cx="39" cy="25" r="1.2" fill="white"/>
-        <path d="M20 40 Q30 48 40 40" stroke="#92400e" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-        <circle cx="18" cy="32" r="3.5" fill="#f59e0b" opacity=".45"/>
-        <circle cx="42" cy="32" r="3.5" fill="#f59e0b" opacity=".45"/>
-      </svg>
-      <div>
-        <div class="t-name">🧮 ケイ先生</div>
-        <div class="t-msg">宿題の写真を撮ってね！<br>文字を自動で読み取って解説するよ📖</div>
+
+    <!-- Character hero -->
+    <div class="hero-card">
+      <div class="char-wrap">
+        <div class="char-ring">
+          <svg width="56" height="56" viewBox="0 0 80 80">
+            <circle cx="40" cy="44" r="28" fill="#fde8a0"/>
+            <ellipse cx="13" cy="44" rx="7" ry="9" fill="#fde8a0"/>
+            <ellipse cx="67" cy="44" rx="7" ry="9" fill="#fde8a0"/>
+            <rect x="19" y="15" width="42" height="5" rx="2.5" fill="#2d3561"/>
+            <polygon points="40,7 61,17 40,23 19,17" fill="#3d47a0"/>
+            <line x1="61" y1="17" x2="67" y2="29" stroke="#2d3561" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="67" cy="31" r="3" fill="#ffd93d"/>
+            <ellipse cx="29" cy="45" rx="5.5" ry="6" fill="#fff"/>
+            <ellipse cx="51" cy="45" rx="5.5" ry="6" fill="#fff"/>
+            <circle cx="30" cy="45.5" r="3.5" fill="#2d3561"/>
+            <circle cx="52" cy="45.5" r="3.5" fill="#2d3561"/>
+            <circle cx="31.2" cy="44" r="1.2" fill="#fff"/>
+            <circle cx="53.2" cy="44" r="1.2" fill="#fff"/>
+            <ellipse cx="22" cy="55" rx="5.5" ry="4" fill="#ffaaa5" opacity=".5"/>
+            <ellipse cx="58" cy="55" rx="5.5" ry="4" fill="#ffaaa5" opacity=".5"/>
+            <path d="M31 62 Q40 70 49 62" stroke="#c0622a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+            <rect x="22" y="39" width="15" height="12" rx="5" fill="none" stroke="#2d3561" stroke-width="2"/>
+            <rect x="43" y="39" width="15" height="12" rx="5" fill="none" stroke="#2d3561" stroke-width="2"/>
+            <line x1="37" y1="45" x2="43" y2="45" stroke="#2d3561" stroke-width="2"/>
+          </svg>
+        </div>
+      </div>
+      <div class="hero-info">
+        <div class="hero-badge">🎓 数学の先生</div>
+        <div class="hero-name">ケイ先生</div>
+        <div class="hero-msg">宿題の写真を撮ってください。<br>ステップで丁寧に解説します 📖</div>
       </div>
     </div>
 
     <div class="drop-zone" id="dropZone">
       <input type="file" id="fileInput" accept="image/*" onchange="handleFile(event)">
-      <span class="drop-cam">📷</span>
-      <div class="drop-title">タップして写真を選ぶ</div>
-      <div class="drop-sub">問題がはっきり写るように撮ってね</div>
+      <div class="drop-icon-box">📷</div>
+      <div class="drop-title">写真を選ぶ</div>
+      <div class="drop-sub">タップして選択、またはドラッグ＆ドロップ</div>
     </div>
 
     <div class="preview-sec" id="previewSec">
       <img id="previewImg" class="preview-img" src="" alt="">
-      <div class="ocr-box" id="ocrBox" style="display:none">
-        <div class="ocr-label">📝 読み取った問題文（修正できます）</div>
-        <textarea class="ocr-text" id="ocrText" placeholder="ここに問題文が入ります"></textarea>
-        <div class="ocr-actions">
-          <button class="btn-primary" onclick="solveQuestion()">🧮 解説してもらう</button>
-          <button class="btn-secondary" onclick="retryOcr()">🔄 読み直す</button>
+      <div class="ocr-card" id="ocrBox">
+        <div class="ocr-lbl" id="ocrLabel">読み取った問題文（修正できます）</div>
+        <textarea class="ocr-ta" id="ocrText" placeholder="ここに問題文が入ります"></textarea>
+        <div class="ocr-acts">
+          <button class="btn-p" onclick="solveQuestion()">解説してもらう</button>
+          <button class="btn-s" onclick="retryOcr()">読み直す</button>
         </div>
       </div>
-      <div style="display:flex;gap:8px;margin-top:10px" id="previewActions">
-        <button class="btn-primary" id="btnOcr" onclick="runOcr()">🔍 文字を読み取る</button>
-        <button class="btn-secondary" onclick="clearImg()" style="padding:14px 16px">🗑️</button>
+      <div class="preview-actions" id="previewActions">
+        <button class="btn-p" onclick="runOcr()">文字を読み取る</button>
+        <button class="btn-ic" onclick="clearImg()">🗑</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ CHAT ══ -->
+<!-- CHAT -->
 <div class="screen" id="s-chat">
-  <div class="nav-bar">
-    <button class="btn-back" onclick="goScreen('s-upload')">←</button>
-    <div style="display:flex;align-items:center;gap:8px;flex:1;overflow:hidden">
-      <div style="font-size:22px">🧮</div>
-      <div>
-        <div style="font-size:14px;font-weight:700">ケイ先生</div>
-        <div style="font-size:10px;color:#10b981;font-weight:700">● オフラインで動作中</div>
-      </div>
+  <div class="chat-nav">
+    <button class="btn-back" onclick="goScreen('s-upload')">‹ 戻る</button>
+    <div class="chat-av">🧮</div>
+    <div style="flex:1;overflow:hidden">
+      <div class="chat-tname">ケイ先生</div>
+      <div class="chat-tst">● オフラインで動作中</div>
     </div>
-    <button class="btn-sm" onclick="goScreen('s-upload')">📸 新問題</button>
+    <button class="btn-nav-txt" onclick="goScreen('s-upload')">新しい問題</button>
   </div>
   <div class="chat-messages" id="chatMessages"></div>
   <div class="chat-footer">
-    <div class="save-row">
-      <button class="btn-save" id="btnSave" onclick="saveMistake()">📌 間違えた問題として保存</button>
-    </div>
+    <button class="btn-save" id="btnSave" onclick="saveMistake()">📌 間違えた問題として保存</button>
     <div class="chat-row">
-      <textarea class="chat-ta" id="chatInput" placeholder="わからないことを聞いてね…" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="btn-send" id="btnSend" onclick="sendMsg()">➤</button>
+      <textarea class="chat-ta" id="chatInput" placeholder="質問を入力..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-send" id="btnSend" onclick="sendMsg()">↑</button>
     </div>
   </div>
 </div>
 
-<!-- ══ MISTAKES ══ -->
+<!-- MISTAKES -->
 <div class="screen" id="s-mistakes">
   <div class="nav-bar">
-    <div class="nav-title" style="font-size:16px">📌 間違えた問題</div>
-    <button class="btn-sm" onclick="clearAllMistakes()">全削除</button>
+    <div class="nav-title">間違えた問題</div>
+    <button class="btn-nav-txt" onclick="clearAllMistakes()" style="color:var(--red)">全削除</button>
   </div>
   <div class="page-body" id="mistakeList"></div>
 </div>
 
-<!-- ══ PARENT ══ -->
+<!-- PARENT -->
 <div class="screen" id="s-parent">
-  <div class="nav-bar">
-    <div class="nav-title" style="font-size:16px">👨‍👩‍👧 保護者ページ</div>
-  </div>
-  <div class="page-body">
-    <div class="parent-hero"><h2>📊 学習レポート</h2><p>お子さまの宿題サポート履歴</p></div>
+  <div class="nav-bar"><div class="nav-title">保護者ページ</div></div>
+  <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
     <div class="stats-grid" id="statsGrid"></div>
-    <div class="sec-head">🕐 最近の履歴</div>
-    <div id="recentList"></div>
+    <div class="sec-head">最近の履歴</div>
+    <div class="recent-list" id="recentList"></div>
   </div>
 </div>
 
-<!-- GLOBAL TAB -->
 <div class="global-tab" id="globalTab"></div>
 
-<!-- OCR OVERLAY -->
-<div class="ocr-overlay" id="ocrOverlay">
-  <div class="ocr-spin">🔍</div>
-  <div class="ocr-bar-wrap"><div class="ocr-bar"></div></div>
-  <div class="ocr-msg" id="ocrMsg">文字を読み取り中…</div>
+<div class="ocr-ov" id="ocrOv">
+  <span class="ocr-sp">🔍</span>
+  <div class="ocr-pg-wrap"><div class="ocr-pg-bar"></div></div>
+  <div class="ocr-msg" id="ocrMsgTxt">文字を読み取り中...</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script type="module">
 import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm';
 
-/* ── STATE ── */
-let engine = null;
-let imgB64 = null;
-let imgFile = null;
-let currentQuestion = '';
-let chatHist = [];
-let isGenerating = false;
+let engine=null,imgB64=null,currentQuestion='',chatHist=[],isGenerating=false;
+const getMk=()=>{try{return JSON.parse(localStorage.getItem('mk')||'[]')}catch{return[]}};
+const saveMk=a=>{try{localStorage.setItem('mk',JSON.stringify(a))}catch{}};
+const getHist=()=>{try{return JSON.parse(localStorage.getItem('hist')||'[]')}catch{return[]}};
+const addHist=i=>{try{const h=getHist();h.unshift(i);localStorage.setItem('hist',JSON.stringify(h.slice(0,100)))}catch{}};
 
-/* ── STORAGE ── */
-const getMistakes = () => {try{return JSON.parse(localStorage.getItem('mk')||'[]')}catch{return[]}};
-const saveMistakes = a => {try{localStorage.setItem('mk',JSON.stringify(a))}catch{}};
-const getHistory = () => {try{return JSON.parse(localStorage.getItem('hist')||'[]')}catch{return[]}};
-const addHistory = i => {try{const h=getHistory();h.unshift(i);localStorage.setItem('hist',JSON.stringify(h.slice(0,100)))}catch{}};
-
-/* ── TABS ── */
-const TABS = [{id:'s-upload',icon:'🏠',label:'ホーム'},{id:'s-mistakes',icon:'📌',label:'復習'},{id:'s-parent',icon:'👨‍👩‍👧',label:'保護者'}];
-
-function buildTab(activeId) {
-  document.getElementById('globalTab').innerHTML = TABS.map(t =>
-    `<button class="tab-btn${t.id===activeId?' active':''}" onclick="window._switchTab('${t.id}')">
+const TABS=[{id:'s-upload',icon:'🏠',label:'ホーム'},{id:'s-mistakes',icon:'📌',label:'復習'},{id:'s-parent',icon:'👨‍👩‍👧',label:'保護者'}];
+function buildTab(aid){
+  document.getElementById('globalTab').innerHTML=TABS.map(t=>
+    `<button class="tab-btn${t.id===aid?' active':''}" onclick="window._tab('${t.id}')">
       <span class="tab-icon">${t.icon}</span><span class="tab-label">${t.label}</span>
     </button>`).join('');
 }
-
-window._switchTab = id => {
-  goScreen(id);
-  if(id==='s-mistakes') renderMistakes();
-  if(id==='s-parent') renderParent();
-};
-
-function goScreen(id) {
+window._tab=id=>{goScreen(id);if(id==='s-mistakes')renderMk();if(id==='s-parent')renderParent();};
+function goScreen(id){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const el = document.getElementById(id);
-  el.classList.add('active');
-  el.style.animation = 'slideIn .35s cubic-bezier(.34,1.2,.64,1) forwards';
+  const el=document.getElementById(id);el.classList.add('active');
+  el.style.animation='fadeUp .3s cubic-bezier(.22,1,.36,1) forwards';
   buildTab(['s-chat'].includes(id)?'s-upload':id);
 }
-window.goScreen = goScreen;
+window.goScreen=goScreen;
 
-/* ── BOOT ── */
-function setStep(i, state) {
-  const el = document.getElementById('bstep'+i);
-  if(!el) return;
-  el.className = 'bstep ' + state;
-  el.querySelector('.bstep-icon').textContent = state==='done'?'✅':state==='active'?'⏳':'⭕';
-}
-function setProg(pct, text) {
-  document.getElementById('progFill').style.width = pct+'%';
-  document.getElementById('progText').textContent = text;
-}
+function setStep(i,s){const el=document.getElementById('bstep'+i);if(!el)return;el.className='bstep '+s;el.querySelector('.bstep-ic').textContent=s==='done'?'✓':s==='active'?'⏳':'○';}
+function setProg(p,t){document.getElementById('progFill').style.width=p+'%';document.getElementById('progTxt').textContent=t;}
 
-async function boot() {
-  try {
-    // Step 1: Tesseract warm-up
-    setStep(0,'active'); setProg(5,'OCRエンジンを準備中...');
-    // Tesseractの言語データを事前ロード（実際の認識は行わず言語データのみDL）
-    const worker = await Tesseract.createWorker('jpn+eng', 1, {
-      logger: m => {
-        if(m.status.includes('loading')) {
-          const pct = Math.round((m.progress||0) * 20);
-          setProg(5 + pct, 'OCR言語データを準備中...');
-        }
-      }
+async function boot(){
+  try{
+    setStep(0,'active');setProg(5,'文字認識エンジンを準備中...');
+    const w=await Tesseract.createWorker('jpn+eng',1,{logger:m=>{if(m.status.includes('loading'))setProg(5+Math.round((m.progress||0)*20),'OCR言語データを準備中...');}});
+    await w.terminate();setStep(0,'done');setProg(25,'完了');
+    setStep(1,'active');setProg(30,'AIモデルを読み込み中...');
+    engine=await CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC',{
+      initProgressCallback:r=>{setProg(30+Math.round(r.progress*65),r.text||`読み込み中... ${Math.round(r.progress*100)}%`);}
     });
-    await worker.terminate();
-    setStep(0,'done'); setProg(25,'OCR準備完了！');
-
-    // Step 2: WebLLM
-    setStep(1,'active'); setProg(30,'AIモデルを読み込み中...');
-    engine = await CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC', {
-      initProgressCallback: r => {
-        const pct = 30 + Math.round(r.progress * 65);
-        setProg(pct, r.text || `AIを読み込み中... ${Math.round(r.progress*100)}%`);
-      }
-    });
-    setStep(1,'done'); setProg(98,'もう少し...');
-
-    // Step 3: Done
-    setStep(2,'active');
-    await new Promise(r=>setTimeout(r,600));
-    setProg(100,'起動完了！✨');
-    setStep(2,'done');
-    await new Promise(r=>setTimeout(r,800));
-    goScreen('s-upload'); buildTab('s-upload');
-
-  } catch(err) {
-    console.error('Boot error:', err);
-    setProg(0, '⚠️ エラー: '+String(err).slice(0,50));
-    // Fallback: skip WebLLM, use only OCR
-    await new Promise(r=>setTimeout(r,1500));
-    goScreen('s-upload'); buildTab('s-upload');
-    document.getElementById('aiDot').className='ai-dot warn';
-    document.getElementById('aiBarText').textContent='⚠️ AIの一部が読み込めませんでした。再読み込みしてください。';
+    setStep(1,'done');setProg(98,'もう少し...');setStep(2,'active');
+    await new Promise(r=>setTimeout(r,600));setProg(100,'起動完了');setStep(2,'done');
+    await new Promise(r=>setTimeout(r,800));goScreen('s-upload');buildTab('s-upload');
+  }catch(err){
+    console.error(err);setProg(0,'エラーが発生しました');
+    await new Promise(r=>setTimeout(r,1500));goScreen('s-upload');buildTab('s-upload');
+    document.getElementById('aiDot').className='s-dot warn';
+    document.getElementById('aiBarTxt').textContent='AIの読み込みに失敗しました。再読み込みしてください。';
   }
 }
 
-/* ── FILE ── */
-window.handleFile = e => { const f=e.target.files[0]; if(f) loadFile(f); };
-
-function loadFile(file) {
-  if(file.size > 8*1024*1024){ alert('8MB以内の画像を使ってね📸'); return; }
-  imgFile = file;
-  const r = new FileReader();
-  r.onload = e => {
-    imgB64 = e.target.result;
-    document.getElementById('previewImg').src = e.target.result;
-    document.getElementById('previewSec').style.display = 'block';
-    document.getElementById('dropZone').style.display = 'none';
-    document.getElementById('ocrBox').style.display = 'none';
-    document.getElementById('previewActions').style.display = 'flex';
-  };
+window.handleFile=e=>{const f=e.target.files[0];if(f)loadFile(f);};
+function loadFile(file){
+  if(file.size>8*1024*1024){alert('8MB以内の画像を使ってください');return;}
+  const r=new FileReader();
+  r.onload=e=>{imgB64=e.target.result;document.getElementById('previewImg').src=e.target.result;document.getElementById('previewSec').style.display='block';document.getElementById('dropZone').style.display='none';document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';};
   r.readAsDataURL(file);
 }
-
-window.clearImg = () => {
-  imgB64=null; imgFile=null; currentQuestion='';
-  document.getElementById('previewSec').style.display='none';
-  document.getElementById('dropZone').style.display='block';
-  document.getElementById('fileInput').value='';
-  document.getElementById('ocrBox').style.display='none';
-};
-
-const dz = document.getElementById('dropZone');
+window.clearImg=()=>{imgB64=null;currentQuestion='';document.getElementById('previewSec').style.display='none';document.getElementById('dropZone').style.display='block';document.getElementById('fileInput').value='';document.getElementById('ocrBox').style.display='none';};
+const dz=document.getElementById('dropZone');
 dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
 dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
 dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f?.type.startsWith('image/'))loadFile(f);});
 
-/* ── OCR ── */
-window.runOcr = async () => {
-  if(!imgB64) { alert('先に写真を選んでね📷'); return; }
-  showOcrOverlay(true, 'OCRで文字を読み取り中…');
-
-  try {
-    const result = await Tesseract.recognize(imgB64, 'jpn+eng', {
-      logger: m => {
-        if(m.status === 'recognizing text') {
-          const pct = Math.round(m.progress * 100);
-          document.getElementById('ocrMsg').textContent = `文字を読み取り中… ${pct}%`;
-        }
-      }
-    });
-
-    const text = result.data.text.trim();
-    const confidence = result.data.confidence || 0;
-    showOcrOverlay(false);
-
-    if(!text || text.length < 3 || confidence < 20) {
-      // OCR failed - show manual input
-      document.getElementById('ocrText').value = '';
-      document.getElementById('ocrText').placeholder = '自動読み取りに失敗しました。問題を手入力してね（例：2x+5=13）';
-      document.getElementById('ocrBox').style.display = 'block';
-      document.getElementById('previewActions').style.display = 'none';
-      addOcrFailureNote();
-    } else {
-      // OCR success
-      document.getElementById('ocrText').value = cleanOcrText(text);
-      document.getElementById('ocrBox').style.display = 'block';
-      document.getElementById('previewActions').style.display = 'none';
-      const label = document.querySelector('.ocr-label');
-      if(label) {
-        const conf = Math.round(confidence);
-        const emoji = conf >= 70 ? '✅' : conf >= 40 ? '⚠️' : '❓';
-        label.textContent = `${emoji} 読み取り完了（精度: ${conf}%）修正できます`;
-      }
+window.runOcr=async()=>{
+  if(!imgB64){alert('先に写真を選んでください');return;}
+  showOv(true,'文字を読み取り中...');
+  try{
+    const res=await Tesseract.recognize(imgB64,'jpn+eng',{logger:m=>{if(m.status==='recognizing text')document.getElementById('ocrMsgTxt').textContent=`文字を読み取り中... ${Math.round(m.progress*100)}%`;}});
+    const text=res.data.text.trim(),conf=res.data.confidence||0;
+    showOv(false);
+    if(!text||text.length<3||conf<20){
+      document.getElementById('ocrText').value='';document.getElementById('ocrText').placeholder='自動読み取りに失敗しました。問題を手入力してください。';document.getElementById('ocrLabel').textContent='⚠️ 自動読み取り失敗 — 手入力してください';
+    }else{
+      document.getElementById('ocrText').value=clean(text);
+      document.getElementById('ocrLabel').textContent=`${conf>=70?'✓':conf>=40?'△':'?'} 読み取り完了（精度 ${Math.round(conf)}%）— 修正できます`;
     }
+    document.getElementById('ocrBox').style.display='block';document.getElementById('previewActions').style.display='none';
+  }catch(e){showOv(false);document.getElementById('ocrText').value='';document.getElementById('ocrText').placeholder='エラーが発生しました。問題を手入力してください。';document.getElementById('ocrBox').style.display='block';document.getElementById('previewActions').style.display='none';}
+};
+window.retryOcr=()=>{document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';document.getElementById('ocrLabel').textContent='読み取った問題文（修正できます）';const ta=document.getElementById('ocrText');if(ta){ta.value='';ta.placeholder='ここに問題文が入ります';}window.runOcr();};
+function clean(t){return t.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/[^\S\n]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();}
+function showOv(v,m=''){document.getElementById('ocrOv').classList.toggle('show',v);if(m)document.getElementById('ocrMsgTxt').textContent=m;}
 
-  } catch(err) {
-    showOcrOverlay(false);
-    document.getElementById('ocrText').value = '';
-    document.getElementById('ocrText').placeholder = 'エラーが起きました。問題を手入力してね';
-    document.getElementById('ocrBox').style.display = 'block';
-    document.getElementById('previewActions').style.display = 'none';
-  }
+const SYS=`あなたは中学生（1〜3年生）専門の数学の先生「ケイ先生」です。フレンドリーで明るい口調で話します。絵文字を適度に使ってください。問題の解説は必ず：どんな問題か説明→ステップ1〜4→✅ 答え→💡 ポイント の形式で。中学生にわかりやすい言葉を使ってください。`;
+
+window.solveQuestion=async()=>{
+  const text=document.getElementById('ocrText').value.trim();
+  if(!text){alert('問題文を入力してください');return;}
+  if(!engine){alert('AI先生が準備中です。少し待ってから試してください。');return;}
+  currentQuestion=text;chatHist=[];document.getElementById('chatMessages').innerHTML='';document.getElementById('btnSave').style.display='none';goScreen('s-chat');
+  addMsg('ai','問題を確認します 📖');addMsg('user',text);addTyping();
+  chatHist.push({role:'user',content:`次の数学の問題を解説してください：\n\n${text}`});
+  isGenerating=true;document.getElementById('btnSend').disabled=true;
+  try{
+    const reply=await gen(chatHist);removeTyping();addMsg('ai',reply);chatHist.push({role:'assistant',content:reply});if(chatHist.length>40)chatHist=chatHist.slice(-40);
+    document.getElementById('btnSave').style.display='flex';addHist({date:new Date().toLocaleDateString('ja-JP'),q:text.slice(0,40),solved:true});spawnStars(4);
+  }catch(e){removeTyping();addMsg('ai','エラーが発生しました。もう一度試してください。');}
+  isGenerating=false;document.getElementById('btnSend').disabled=false;
 };
 
-window.retryOcr = () => {
-  document.getElementById('ocrBox').style.display = 'none';
-  document.getElementById('previewActions').style.display = 'flex';
-  // ラベルとplaceholderをリセット
-  const label = document.querySelector('.ocr-label');
-  if(label) label.textContent = '📝 読み取った問題文（修正できます）';
-  const ta = document.getElementById('ocrText');
-  if(ta) { ta.value=''; ta.placeholder='ここに問題文が入ります'; }
-  window.runOcr();
+window.sendMsg=async()=>{
+  const inp=document.getElementById('chatInput'),text=inp.value.trim();
+  if(!text||isGenerating)return;if(!engine){addMsg('ai','AI先生が準備中です。');return;}
+  inp.value='';autoResize(inp);addMsg('user',text);chatHist.push({role:'user',content:text});
+  addTyping();isGenerating=true;document.getElementById('btnSend').disabled=true;
+  try{const reply=await gen(chatHist);removeTyping();addMsg('ai',reply);chatHist.push({role:'assistant',content:reply});if(chatHist.length>40)chatHist=chatHist.slice(-40);}
+  catch(e){removeTyping();addMsg('ai','エラーが発生しました。');}
+  isGenerating=false;document.getElementById('btnSend').disabled=false;
 };
 
-function cleanOcrText(text) {
-  return text
-    .replace(/\r\n/g,'\n').replace(/\r/g,'\n')
-    .replace(/[^\S\n]+/g,' ')
-    .replace(/\n{3,}/g,'\n\n')
-    .trim();
-}
-
-function addOcrFailureNote() {
-  const label = document.querySelector('.ocr-label');
-  if(label && !label.textContent.includes('失敗')) {
-    label.textContent = '⚠️ 自動読み取り失敗 → 問題を手入力してください';
-  }
-  const ta = document.getElementById('ocrText');
-  if(ta && !ta.value) {
-    ta.placeholder = '問題を手入力してね（例：2x+5=13、三角形の面積を求めなさい）';
-  }
-}
-
-function showOcrOverlay(show, msg='') {
-  const ov = document.getElementById('ocrOverlay');
-  ov.classList.toggle('show', show);
-  if(msg) document.getElementById('ocrMsg').textContent = msg;
-}
-
-/* ── SOLVE ── */
-const SYSTEM = `あなたは中学生（1〜3年生）専門の数学の先生「ケイ先生」です。
-明るくフレンドリーな口調で話します。絵文字を適度に使ってください。
-
-問題の解説は必ず以下の形式で：
-・「どんな問題か」を1〜2文で説明
-・「ステップ1：〇〇」〜「ステップ4：〇〇」の形でステップごとに解く
-・「✅ 答え：〇〇」で答えをまとめる
-・「💡 ここがポイント！〇〇」で覚えてほしいことを伝える
-
-中学生にわかりやすい言葉を使い、難しい用語は避けてください。
-図形の問題は、考え方と公式をわかりやすく説明してください。
-文章題は「何を求めるか」を最初に整理してください。`;
-
-window.solveQuestion = async () => {
-  const text = document.getElementById('ocrText').value.trim();
-  if(!text) { alert('問題文を入力してね😊'); return; }
-  if(!engine) { alert('AI先生がまだ準備中です⏳ 少し待ってから試してね'); return; }
-
-  currentQuestion = text;
-  chatHist = [];
-  document.getElementById('chatMessages').innerHTML = '';
-  document.getElementById('btnSave').style.display = 'none';
-  goScreen('s-chat');
-
-  addMsg('ai', `🧮 <strong>ケイ先生だよ！</strong><br>問題を確認するね…📖`);
-  addMsg('user', text);
-  addTyping();
-
-  const userMsg = `次の数学の問題を解説してください：\n\n${text}`;
-  chatHist.push({ role:'user', content: userMsg });
-
-  isGenerating = true;
-  document.getElementById('btnSend').disabled = true;
-
-  try {
-    const reply = await generateReply(chatHist);
-    removeTyping();
-    addMsg('ai', reply);
-    chatHist.push({ role:'assistant', content: reply });
-    if(chatHist.length > 40) chatHist = chatHist.slice(-40);
-    document.getElementById('btnSave').style.display = 'flex';
-    addHistory({ date: new Date().toLocaleDateString('ja-JP'), q: text.slice(0,40), solved:true });
-    spawnStars(5);
-  } catch(err) {
-    removeTyping();
-    addMsg('ai', 'ごめんね、エラーが起きちゃった😢 もう一度試してね！');
-    console.error(err);
-  }
-
-  isGenerating = false;
-  document.getElementById('btnSend').disabled = false;
-};
-
-/* ── CHAT ── */
-window.sendMsg = async () => {
-  const inp = document.getElementById('chatInput');
-  const text = inp.value.trim();
-  if(!text || isGenerating) return;
-  if(!engine) { addMsg('ai','⚠️ AI先生が準備中です⏳'); return; }
-
-  inp.value=''; autoResize(inp);
-  addMsg('user', text);
-  chatHist.push({ role:'user', content: text });
-  addTyping();
-  isGenerating = true;
-  document.getElementById('btnSend').disabled = true;
-
-  try {
-    const reply = await generateReply(chatHist);
-    removeTyping();
-    addMsg('ai', reply);
-    chatHist.push({ role:'assistant', content: reply });
-    if(chatHist.length > 40) chatHist = chatHist.slice(-40);
-  } catch(err) {
-    removeTyping();
-    addMsg('ai','エラーが起きたよ😢 もう一度試してね！');
-  }
-
-  isGenerating = false;
-  document.getElementById('btnSend').disabled = false;
-};
-
-async function generateReply(messages) {
-  const msgs = [{ role:'system', content: SYSTEM }, ...messages];
-  let reply = '';
-
-  // Streaming generation
-  const chunks = await engine.chat.completions.create({
-    messages: msgs, temperature: 0.7, max_tokens: 800, stream: true,
-  });
-
-  for await (const chunk of chunks) {
-    const delta = chunk.choices[0]?.delta?.content || '';
-    reply += delta;
-    try {
-      const typingEl = document.getElementById('typingEl');
-      if(typingEl) {
-        const b = typingEl.querySelector('.typing-bubble');
-        if(b && reply.length > 0) {
-          b.innerHTML = `<span style="font-size:12px;color:var(--cd);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(reply.slice(-30))}…</span>`;
-        }
-      }
-    } catch(_) {}
+async function gen(messages){
+  const msgs=[{role:'system',content:SYS},...messages];let reply='';
+  const chunks=await engine.chat.completions.create({messages:msgs,temperature:0.7,max_tokens:800,stream:true});
+  for await(const chunk of chunks){
+    reply+=(chunk.choices[0]?.delta?.content||'');
+    try{const tel=document.getElementById('typingEl');if(tel){const b=tel.querySelector('.typing-bub');if(b&&reply.length>0)b.innerHTML=`<span style="font-size:12px;color:var(--sub);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(reply.slice(-20))}…</span>`;}}catch(_){}
   }
   return reply;
 }
 
-/* ── SAVE MISTAKE ── */
-window.saveMistake = () => {
-  if(!currentQuestion) return;
-  const mistakes = getMistakes();
-  mistakes.unshift({
-    id: Date.now(), question: currentQuestion,
-    answer: chatHist.find(m=>m.role==='assistant')?.content?.slice(0,200)||'',
-    date: new Date().toLocaleDateString('ja-JP'), reviewed: false
-  });
-  saveMistakes(mistakes);
-  document.getElementById('btnSave').style.display = 'none';
-  addMsg('ai','📌 間違えた問題として保存したよ！「復習」タブから確認できるよ✨');
-  spawnStars(4);
+window.saveMistake=()=>{
+  if(!currentQuestion)return;const mk=getMk();
+  mk.unshift({id:Date.now(),question:currentQuestion,answer:chatHist.find(m=>m.role==='assistant')?.content?.slice(0,200)||'',date:new Date().toLocaleDateString('ja-JP'),reviewed:false});
+  saveMk(mk);document.getElementById('btnSave').style.display='none';addMsg('ai','📌 保存しました。「復習」タブから確認できます。');spawnStars(3);
 };
 
-/* ── MISTAKES ── */
-window.renderMistakes = () => {
-  const all = getMistakes();
-  const el = document.getElementById('mistakeList');
-  if(!all.length) {
-    el.innerHTML = `<div class="empty-state"><span class="empty-icon">📭</span><div style="font-size:15px;line-height:1.7">保存した問題はまだないよ！<br>チャット画面で「📌 保存」ボタンを<br>タップすると保存できるよ</div></div>`;
-    return;
-  }
-  el.innerHTML = all.map(m => `
-    <div class="mistake-card">
-      <div class="mk-hd">
-        <span class="mk-badge">🔢 数学</span>
-        ${m.reviewed?'<span style="font-size:11px;font-weight:700;padding:2px 8px;border-radius:8px;background:#dcfce7;color:#166534">✅ 復習済み</span>':''}
-        <span class="mk-date">${m.date}</span>
-      </div>
-      <div class="mk-q">${escHtml(m.question.slice(0,80))}</div>
-      ${m.answer?`<div class="mk-ans">${escHtml(m.answer.slice(0,60))}...</div>`:''}
-      <div class="mk-acts">
-        <button class="btn-review" onclick="window._reviewMistake(${m.id})">🔄 もう一度解く</button>
-        <button class="btn-del-mk" onclick="window._deleteMistake(${m.id})">🗑️</button>
-      </div>
-    </div>`).join('');
+window.renderMk=()=>{
+  const all=getMk(),el=document.getElementById('mistakeList');
+  if(!all.length){el.innerHTML=`<div class="empty-state"><span class="empty-icon">📭</span><div class="empty-txt">保存した問題はまだありません。<br>チャット画面の「📌 保存」ボタンで記録できます。</div></div>`;return;}
+  el.innerHTML=all.map((m,i)=>`<div class="mistake-card" style="animation:scaleIn .3s ease ${i*.04}s backwards"><div class="mk-hd"><span class="mk-badge">数学</span>${m.reviewed?'<span class="mk-rv">復習済み</span>':''}<span class="mk-date">${m.date}</span></div><div class="mk-q">${esc(m.question.slice(0,80))}</div><div class="mk-acts"><button class="btn-p" style="padding:11px" onclick="window._rv(${m.id})">もう一度解く</button><button class="btn-ic" onclick="window._dl(${m.id})">🗑</button></div></div>`).join('');
 };
-
-window._reviewMistake = id => {
-  const mistakes = getMistakes();
-  const item = mistakes.find(m=>m.id===id);
-  if(!item) return;
-  item.reviewed = true;
-  saveMistakes(mistakes);
-  currentQuestion = item.question;
-  chatHist = [];
-  document.getElementById('chatMessages').innerHTML='';
-  goScreen('s-chat');
-  addMsg('ai',`🔄 <strong>復習だよ！</strong><br><br>問題：${escHtml(item.question)}<br><br>もう一度一緒に解こう💪`);
-  chatHist.push({role:'assistant', content:`問題「${item.question}」の復習をします。`});
-};
-
-window._deleteMistake = id => {
-  saveMistakes(getMistakes().filter(m=>m.id!==id));
-  renderMistakes();
-};
-
-window.clearAllMistakes = () => {
-  // iOS WebViewでconfirmが効かない場合があるためカスタム確認
-  const nav = document.querySelector('#s-mistakes .nav-bar');
-  if(!nav) return;
-  const existing = document.getElementById('confirmBar');
-  if(existing) { existing.remove(); return; }
-  const bar = document.createElement('div');
-  bar.id = 'confirmBar';
-  bar.style.cssText = 'background:#fef2f2;border:1.5px solid #fca5a5;border-radius:12px;padding:10px 14px;margin-top:8px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:#991b1b;';
-  bar.innerHTML = `本当に全削除しますか？<button onclick="saveMistakes([]);renderMistakes();document.getElementById('confirmBar')?.remove()" style="margin-left:auto;padding:6px 14px;border-radius:8px;border:none;background:#ef4444;color:#fff;font-family:'Zen Maru Gothic',sans-serif;font-size:12px;font-weight:700;cursor:pointer">削除する</button><button onclick="document.getElementById('confirmBar')?.remove()" style="padding:6px 14px;border-radius:8px;border:1.5px solid #fca5a5;background:#fff;color:#991b1b;font-family:'Zen Maru Gothic',sans-serif;font-size:12px;font-weight:700;cursor:pointer">キャンセル</button>`;
+window._rv=id=>{const mk=getMk(),item=mk.find(m=>m.id===id);if(!item)return;item.reviewed=true;saveMk(mk);currentQuestion=item.question;chatHist=[];document.getElementById('chatMessages').innerHTML='';goScreen('s-chat');addMsg('ai',`復習です。\n\n問題：${esc(item.question)}\n\nいっしょに解いてみましょう 💪`);chatHist.push({role:'assistant',content:`問題「${item.question}」の復習をします。`});};
+window._dl=id=>{saveMk(getMk().filter(m=>m.id!==id));renderMk();};
+window.clearAllMistakes=()=>{
+  const nav=document.querySelector('#s-mistakes .nav-bar');if(!nav)return;
+  const ex=document.getElementById('confirmBar');if(ex){ex.remove();return;}
+  const bar=document.createElement('div');bar.id='confirmBar';
+  bar.style.cssText='background:#fff5f5;border:1px solid rgba(255,75,75,.2);border-radius:12px;padding:10px 14px;margin:.5rem 1.25rem;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--red);';
+  bar.innerHTML=`全て削除しますか？<button onclick="saveMk([]);renderMk();document.getElementById('confirmBar')?.remove()" style="margin-left:auto;padding:7px 16px;border-radius:8px;border:none;background:var(--red);color:#fff;font-family:'Noto Sans JP',sans-serif;font-size:12px;font-weight:700;cursor:pointer">削除</button><button onclick="document.getElementById('confirmBar')?.remove()" style="padding:7px 12px;border-radius:8px;border:1px solid rgba(0,0,0,.1);background:#fff;color:var(--sub);font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer">キャンセル</button>`;
   nav.after(bar);
 };
 
-/* ── PARENT ── */
-window.renderParent = () => {
-  const mistakes = getMistakes();
-  const history = getHistory();
-  document.getElementById('statsGrid').innerHTML = `
-    <div class="stat-card"><div class="stat-icon">📚</div><div class="stat-num">${history.length}</div><div class="stat-label">解いた問題数</div></div>
-    <div class="stat-card"><div class="stat-icon">📌</div><div class="stat-num">${mistakes.length}</div><div class="stat-label">保存した間違い</div></div>
-    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-num">${mistakes.filter(m=>m.reviewed).length}</div><div class="stat-label">復習済み</div></div>
-    <div class="stat-card"><div class="stat-icon">🔢</div><div class="stat-num">数学</div><div class="stat-label">取り組み科目</div></div>`;
-  const rl = document.getElementById('recentList');
-  const recent = history.slice(0,8);
-  rl.innerHTML = !recent.length
-    ? '<div style="text-align:center;padding:2rem;color:var(--mid);font-size:14px">まだ履歴がありません</div>'
-    : recent.map(h=>`<div class="recent-item"><div style="width:10px;height:10px;border-radius:50%;background:var(--c);flex-shrink:0"></div><div style="flex:1;font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escHtml(h.q)}</div><div style="font-size:11px;color:var(--mid);flex-shrink:0">${h.date}</div></div>`).join('');
+window.renderParent=()=>{
+  const mk=getMk(),hist=getHist();
+  document.getElementById('statsGrid').innerHTML=`<div class="stat-card"><span class="stat-icon">📚</span><div class="stat-num">${hist.length}</div><div class="stat-label">解いた問題数</div></div><div class="stat-card"><span class="stat-icon">📌</span><div class="stat-num">${mk.length}</div><div class="stat-label">保存した間違い</div></div><div class="stat-card"><span class="stat-icon">✅</span><div class="stat-num">${mk.filter(m=>m.reviewed).length}</div><div class="stat-label">復習済み</div></div><div class="stat-card"><span class="stat-icon">📖</span><div class="stat-num">数学</div><div class="stat-label">取り組み科目</div></div>`;
+  const rl=document.getElementById('recentList'),rec=hist.slice(0,8);
+  rl.innerHTML=!rec.length?'<div style="text-align:center;padding:2rem;color:var(--sub);font-size:13px;font-weight:500">まだ履歴がありません</div>':rec.map(h=>`<div class="recent-item"><div class="ri-dot"></div><div class="ri-q">${esc(h.q)}</div><div class="ri-date">${h.date}</div></div>`).join('');
 };
 
-/* ── HELPERS ── */
-function addMsg(role, html) {
-  const msgs = document.getElementById('chatMessages');
-  const d = document.createElement('div');
-  d.className = `msg ${role}`;
-  const av = role==='ai'
-    ? `<div class="msg-av">🧮</div>`
-    : `<div class="msg-av" style="background:#f0f4ff;border-color:#ddd">🙋</div>`;
-  const content = role==='ai' ? formatAI(html) : escHtml(html);
-  d.innerHTML = `${av}<div class="bubble">${content}</div>`;
-  msgs.appendChild(d);
-  msgs.scrollTop = msgs.scrollHeight;
+function addMsg(role,html){
+  const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className=`msg ${role}`;
+  const av=role==='ai'?`<div class="msg-av">🧮</div>`:`<div class="msg-av-u">🙋</div>`;
+  d.innerHTML=`${av}<div class="bubble">${role==='ai'?fmt(html):esc(html)}</div>`;
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
-
-function escHtml(t) {
-  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function fmt(text){
+  let t=text.includes('<')?text:esc(text);
+  t=t.replace(/ステップ(\d+)[：:]\s*/g,`<div class="step-box"><span class="step-tag">STEP $1</span><br>`);
+  t=t.replace(/(<div class="step-box">.*?)(?=<div class="step-box">|✅|💡|$)/gs,'$1</div>');
+  t=t.replace(/(✅[^\n<]+)/g,'<div class="ans-box">$1</div>');
+  t=t.replace(/(💡[^\n<]+)/g,'<div class="point-box">$1</div>');
+  t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+  t=t.replace(/\n/g,'<br>');return t;
 }
+function addTyping(){const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className='typing-msg';d.id='typingEl';d.innerHTML=`<div class="msg-av">🧮</div><div class="typing-bub"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
+function removeTyping(){document.getElementById('typingEl')?.remove();}
+function spawnStars(n=3){const e=['⭐','✨','🌟','💫'];for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star-float';s.textContent=e[Math.floor(Math.random()*e.length)];s.style.left=(20+Math.random()*60)+'vw';s.style.top=(20+Math.random()*40)+'vh';s.style.animationDelay=(i*.1)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1200);}}
+window.handleKey=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
+window.autoResize=el=>{el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';};
 
-function formatAI(text) {
-  let t = text.includes('<') ? text : escHtml(text);
-  t = t.replace(/ステップ(\d+)[：:]\s*/g, `<div class="step-box"><span class="step-tag">ステップ$1</span><br>`);
-  t = t.replace(/(<div class="step-box">.*?)(?=<div class="step-box">|✅|💡|$)/gs, '$1</div>');
-  t = t.replace(/(✅[^\n<]+)/g,'<div class="ans-box">$1</div>');
-  t = t.replace(/(💡[^\n<]+)/g,'<div class="point-box">$1</div>');
-  t = t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  t = t.replace(/\n/g,'<br>');
-  return t;
-}
-
-function addTyping() {
-  const msgs = document.getElementById('chatMessages');
-  const d = document.createElement('div');
-  d.className='typing-msg'; d.id='typingEl';
-  d.innerHTML=`<div class="msg-av">🧮</div><div class="typing-bubble"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;
-  msgs.appendChild(d); msgs.scrollTop=msgs.scrollHeight;
-}
-function removeTyping(){ document.getElementById('typingEl')?.remove(); }
-
-function spawnStars(count=4) {
-  const emojis=['⭐','✨','🌟','💫','🎉'];
-  for(let i=0;i<count;i++){
-    const s=document.createElement('div'); s.className='star-float';
-    s.textContent=emojis[Math.floor(Math.random()*emojis.length)];
-    s.style.left=(20+Math.random()*60)+'vw';
-    s.style.top=(20+Math.random()*40)+'vh';
-    s.style.animationDelay=(i*.1)+'s';
-    document.body.appendChild(s); setTimeout(()=>s.remove(),1200);
-  }
-}
-
-window.handleKey = e => { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} };
-window.autoResize = el => { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; };
-
-/* ── START ── */
 buildTab('s-upload');
 boot();
 </script>
