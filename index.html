@@ -210,7 +210,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
     <div class="prog-txt" id="progTxt">準備中...</div>
   </div>
   <div class="boot-steps">
-    <div class="bstep active" id="bstep0"><span class="bstep-ic">⏳</span>文字認識エンジンを準備中</div>
+    <div class="bstep active" id="bstep0"><span class="bstep-ic">⏳</span>AI先生の準備中</div>
     <div class="bstep" id="bstep1"><span class="bstep-ic">○</span>AIモデルを読み込み中</div>
     <div class="bstep" id="bstep2"><span class="bstep-ic">○</span>起動完了</div>
   </div>
@@ -285,7 +285,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
         </div>
       </div>
       <div class="preview-actions" id="previewActions">
-        <button class="btn-p" onclick="runOcr()">文字を読み取る</button>
+        <button class="btn-p" onclick="runOcr()">📷 AIで読み取る</button>
         <button class="btn-ic" onclick="clearImg()">🗑</button>
       </div>
     </div>
@@ -340,9 +340,8 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   <div class="ocr-msg" id="ocrMsgTxt">文字を読み取り中...</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
 <script type="module">
-let imgB64=null, currentQuestion='', chatHist=[], isGenerating=false;
+let imgB64=null, imgMimeType='image/jpeg', currentQuestion='', chatHist=[], isGenerating=false;
 const getMk=()=>{try{return JSON.parse(localStorage.getItem('mk')||'[]')}catch{return[]}};
 const saveMk=a=>{try{localStorage.setItem('mk',JSON.stringify(a))}catch{}};
 const getHist=()=>{try{return JSON.parse(localStorage.getItem('hist')||'[]')}catch{return[]}};
@@ -368,27 +367,15 @@ function setStep(i,s){const el=document.getElementById('bstep'+i);if(!el)return;
 function setProg(p,t){document.getElementById('progFill').style.width=p+'%';document.getElementById('progTxt').textContent=t;}
 
 async function boot(){
-  // APIプロキシ版：WebLLM不要なので即起動
-  setStep(0,'active'); setProg(30,'Tesseract OCRを準備中...');
-  try {
-    const w = await Tesseract.createWorker('jpn+eng', 1, {
-      logger: m => {
-        if(m.status.includes('loading')) {
-          setProg(30 + Math.round((m.progress||0)*60), 'OCR言語データを準備中...');
-        }
-      }
-    });
-    await w.terminate();
-    setStep(0,'done'); setProg(90,'もう少し...');
-  } catch(e) {
-    console.warn('Tesseract preload failed:', e);
-    setStep(0,'done'); setProg(90,'準備完了');
-  }
-  setStep(1,'active'); await new Promise(r=>setTimeout(r,400));
-  setProg(100,'起動完了！'); setStep(1,'done');
-  setStep(2,'active'); await new Promise(r=>setTimeout(r,600));
+  // APIプロキシ版：即起動
+  setStep(0,'active'); setProg(40,'準備中...');
+  await new Promise(r=>setTimeout(r,400));
+  setStep(0,'done'); setProg(70,'AI先生に接続中...');
+  setStep(1,'active'); await new Promise(r=>setTimeout(r,500));
+  setStep(1,'done'); setProg(100,'起動完了！');
+  setStep(2,'active'); await new Promise(r=>setTimeout(r,400));
   setStep(2,'done');
-  await new Promise(r=>setTimeout(r,600));
+  await new Promise(r=>setTimeout(r,500));
   goScreen('s-upload'); buildTab('s-upload');
 }
 
@@ -396,7 +383,7 @@ window.handleFile=e=>{const f=e.target.files[0];if(f)loadFile(f);};
 function loadFile(file){
   if(file.size>8*1024*1024){alert('8MB以内の画像を使ってください');return;}
   const r=new FileReader();
-  r.onload=e=>{imgB64=e.target.result;document.getElementById('previewImg').src=e.target.result;document.getElementById('previewSec').style.display='block';document.getElementById('dropZone').style.display='none';document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';};
+  r.onload=e=>{imgB64=e.target.result;imgMimeType=file.type||'image/jpeg';document.getElementById('previewImg').src=e.target.result;document.getElementById('previewSec').style.display='block';document.getElementById('dropZone').style.display='none';document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';};
   r.readAsDataURL(file);
 }
 window.clearImg=()=>{imgB64=null;currentQuestion='';document.getElementById('previewSec').style.display='none';document.getElementById('dropZone').style.display='block';document.getElementById('fileInput').value='';document.getElementById('ocrBox').style.display='none';};
@@ -407,18 +394,34 @@ dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');co
 
 window.runOcr=async()=>{
   if(!imgB64){alert('先に写真を選んでください');return;}
-  showOv(true,'文字を読み取り中...');
+  // Claudeに直接画像を送って問題文を抽出
+  showOv(true,'写真を読み取り中...');
   try{
-    const res=await Tesseract.recognize(imgB64,'jpn+eng',{logger:m=>{if(m.status==='recognizing text')document.getElementById('ocrMsgTxt').textContent=`文字を読み取り中... ${Math.round(m.progress*100)}%`;}});
-    const text=res.data.text.trim(),conf=res.data.confidence||0;
+    const res = await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{
+          role:'user',
+          content:[
+            {type:'image',source:{type:'base64',media_type:imgMimeType,data:imgB64.split(',')[1]}},
+            {type:'text',text:'この画像の数学の問題文をそのままテキストで書き出してください。数式や問題文のみを出力し、説明は不要です。'}
+          ]
+        }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text?.trim() || '';
     showOv(false);
-    if(!text||text.length<3||conf<20){
+    if(!text){
       document.getElementById('ocrText').value='';
-      document.getElementById('ocrText').placeholder='自動読み取りに失敗しました。問題を手入力してください。';
-      document.getElementById('ocrLabel').textContent='⚠️ 自動読み取り失敗 — 手入力してください';
+      document.getElementById('ocrText').placeholder='読み取りに失敗しました。問題を手入力してください。';
+      document.getElementById('ocrLabel').textContent='⚠️ 読み取り失敗 — 手入力してください';
     }else{
-      document.getElementById('ocrText').value=clean(text);
-      document.getElementById('ocrLabel').textContent=`${conf>=70?'✓':conf>=40?'△':'?'} 読み取り完了（精度 ${Math.round(conf)}%）— 修正できます`;
+      document.getElementById('ocrText').value=text;
+      document.getElementById('ocrLabel').textContent='✓ 読み取り完了 — 修正できます';
     }
     document.getElementById('ocrBox').style.display='block';
     document.getElementById('previewActions').style.display='none';
