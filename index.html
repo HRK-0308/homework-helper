@@ -434,15 +434,9 @@ window.runOcr=async()=>{
   }
 };
 window.retryOcr=()=>{document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';document.getElementById('ocrLabel').textContent='読み取った問題文（修正できます）';const ta=document.getElementById('ocrText');if(ta){ta.value='';ta.placeholder='ここに問題文が入ります';}window.runOcr();};
-function clean(t){return t.replace(/
-/g,'
-').replace(/
-/g,'
-').replace(/[^\S
-]+/g,' ').replace(/
-{3,}/g,'
+function clean(t){return t.trim();}
 
-').trim();}
+
 function showOv(v,m=''){document.getElementById('ocrOv').classList.toggle('show',v);if(m)document.getElementById('ocrMsgTxt').textContent=m;}
 
 const SYS=`あなたは中学生（1〜3年生）専門の数学の先生「ケイ先生」です。フレンドリーで明るい口調で話します。絵文字を適度に使ってください。問題の解説は必ず：どんな問題か説明→ステップ1〜4→✅ 答え→💡 ポイント の形式で。中学生にわかりやすい言葉を使ってください。`;
@@ -559,19 +553,19 @@ function addMsg(role,html){
   d.innerHTML=`${av}<div class="bubble">${role==='ai'?fmt(html):esc(html)}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
-function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
-/g,'<br>');}
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
 function fmt(text){
   let t=text.includes('<')?text:esc(text);
   t=t.replace(/ステップ(\d+)[：:]\s*/g,`<div class="step-box"><span class="step-tag">STEP $1</span><br>`);
   t=t.replace(/(<div class="step-box">.*?)(?=<div class="step-box">|✅|💡|$)/gs,'$1</div>');
-  t=t.replace(/(✅[^
-<]+)/g,'<div class="ans-box">$1</div>');
-  t=t.replace(/(💡[^
-<]+)/g,'<div class="point-box">$1</div>');
+  t=t.replace(/(✅[^\n<]+)/g,'<div class="ans-box">$1</div>');
+
+  t=t.replace(/(💡[^\n<]+)/g,'<div class="point-box">$1</div>');
+
   t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  t=t.replace(/
-/g,'<br>');return t;
+  t=t.replace(/\n/g,'<br>');return t;
+
 }
 function addTyping(){const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className='typing-msg';d.id='typingEl';d.innerHTML=`<div class="msg-av">🧮</div><div class="typing-bub"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function removeTyping(){document.getElementById('typingEl')?.remove();}
