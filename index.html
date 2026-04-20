@@ -204,7 +204,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
 <div class="screen active" id="s-boot">
   <span class="boot-char">🤖</span>
   <div class="boot-title">宿題サポーター</div>
-  <div class="boot-sub">AI先生が起動するまでお待ちください<br>初回のみ時間がかかります</div>
+  <div class="boot-sub">AI先生が起動するまでお待ちください<br>初回のみ約1〜2分かかります（約950MB）</div>
   <div class="prog-wrap">
     <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
     <div class="prog-txt" id="progTxt">準備中...</div>
@@ -214,11 +214,11 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
     <div class="bstep" id="bstep1"><span class="bstep-ic">○</span>AIモデルを読み込み中</div>
     <div class="bstep" id="bstep2"><span class="bstep-ic">○</span>起動完了</div>
   </div>
-  <div class="boot-note">
-    ⚠️ 初回のみ3〜5分かかります<br>
+  <div class="boot-note" style="display:none">
+    ⚠️ 初回のみ約1〜2分かかります<br>
     📶 Wi-Fi接続を推奨します<br>
     🔋 充電しながらの使用を推奨します<br>
-    ✅ 2回目以降はすぐ起動します
+    ✅ 2回目以降は数秒で起動します
   </div>
 </div>
 
@@ -230,7 +230,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   <div class="upload-body">
     <div class="status-pill">
       <div class="s-dot" id="aiDot"></div>
-      <span id="aiBarTxt" style="font-size:14px;font-weight:600">AI先生 オンライン（完全オフライン動作）</span>
+      <span id="aiBarTxt" style="font-size:14px;font-weight:600">AI先生 オンライン（クラウドAI搭載）</span>
     </div>
 
     <!-- Character hero -->
@@ -340,11 +340,9 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   <div class="ocr-msg" id="ocrMsgTxt">文字を読み取り中...</div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" crossorigin="anonymous"></script>
 <script type="module">
-import { CreateMLCEngine } from 'https://esm.run/@mlc-ai/web-llm';
-
-let engine=null,imgB64=null,currentQuestion='',chatHist=[],isGenerating=false;
+let imgB64=null, currentQuestion='', chatHist=[], isGenerating=false;
 const getMk=()=>{try{return JSON.parse(localStorage.getItem('mk')||'[]')}catch{return[]}};
 const saveMk=a=>{try{localStorage.setItem('mk',JSON.stringify(a))}catch{}};
 const getHist=()=>{try{return JSON.parse(localStorage.getItem('hist')||'[]')}catch{return[]}};
@@ -370,23 +368,28 @@ function setStep(i,s){const el=document.getElementById('bstep'+i);if(!el)return;
 function setProg(p,t){document.getElementById('progFill').style.width=p+'%';document.getElementById('progTxt').textContent=t;}
 
 async function boot(){
-  try{
-    setStep(0,'active');setProg(5,'文字認識エンジンを準備中...');
-    const w=await Tesseract.createWorker('jpn+eng',1,{logger:m=>{if(m.status.includes('loading'))setProg(5+Math.round((m.progress||0)*20),'OCR言語データを準備中...');}});
-    await w.terminate();setStep(0,'done');setProg(25,'完了');
-    setStep(1,'active');setProg(30,'AIモデルを読み込み中...');
-    engine=await CreateMLCEngine('Phi-3.5-mini-instruct-q4f16_1-MLC',{
-      initProgressCallback:r=>{setProg(30+Math.round(r.progress*65),r.text||`読み込み中... ${Math.round(r.progress*100)}%`);}
+  // APIプロキシ版：WebLLM不要なので即起動
+  setStep(0,'active'); setProg(30,'Tesseract OCRを準備中...');
+  try {
+    const w = await Tesseract.createWorker('jpn+eng', 1, {
+      logger: m => {
+        if(m.status.includes('loading')) {
+          setProg(30 + Math.round((m.progress||0)*60), 'OCR言語データを準備中...');
+        }
+      }
     });
-    setStep(1,'done');setProg(98,'もう少し...');setStep(2,'active');
-    await new Promise(r=>setTimeout(r,600));setProg(100,'起動完了');setStep(2,'done');
-    await new Promise(r=>setTimeout(r,800));goScreen('s-upload');buildTab('s-upload');
-  }catch(err){
-    console.error(err);setProg(0,'エラーが発生しました');
-    await new Promise(r=>setTimeout(r,1500));goScreen('s-upload');buildTab('s-upload');
-    document.getElementById('aiDot').className='s-dot warn';
-    document.getElementById('aiBarTxt').textContent='AIの読み込みに失敗しました。再読み込みしてください。';
+    await w.terminate();
+    setStep(0,'done'); setProg(90,'もう少し...');
+  } catch(e) {
+    console.warn('Tesseract preload failed:', e);
+    setStep(0,'done'); setProg(90,'準備完了');
   }
+  setStep(1,'active'); await new Promise(r=>setTimeout(r,400));
+  setProg(100,'起動完了！'); setStep(1,'done');
+  setStep(2,'active'); await new Promise(r=>setTimeout(r,600));
+  setStep(2,'done');
+  await new Promise(r=>setTimeout(r,600));
+  goScreen('s-upload'); buildTab('s-upload');
 }
 
 window.handleFile=e=>{const f=e.target.files[0];if(f)loadFile(f);};
@@ -410,59 +413,108 @@ window.runOcr=async()=>{
     const text=res.data.text.trim(),conf=res.data.confidence||0;
     showOv(false);
     if(!text||text.length<3||conf<20){
-      document.getElementById('ocrText').value='';document.getElementById('ocrText').placeholder='自動読み取りに失敗しました。問題を手入力してください。';document.getElementById('ocrLabel').textContent='⚠️ 自動読み取り失敗 — 手入力してください';
+      document.getElementById('ocrText').value='';
+      document.getElementById('ocrText').placeholder='自動読み取りに失敗しました。問題を手入力してください。';
+      document.getElementById('ocrLabel').textContent='⚠️ 自動読み取り失敗 — 手入力してください';
     }else{
       document.getElementById('ocrText').value=clean(text);
       document.getElementById('ocrLabel').textContent=`${conf>=70?'✓':conf>=40?'△':'?'} 読み取り完了（精度 ${Math.round(conf)}%）— 修正できます`;
     }
-    document.getElementById('ocrBox').style.display='block';document.getElementById('previewActions').style.display='none';
-  }catch(e){showOv(false);document.getElementById('ocrText').value='';document.getElementById('ocrText').placeholder='エラーが発生しました。問題を手入力してください。';document.getElementById('ocrBox').style.display='block';document.getElementById('previewActions').style.display='none';}
+    document.getElementById('ocrBox').style.display='block';
+    document.getElementById('previewActions').style.display='none';
+  }catch(e){
+    showOv(false);
+    document.getElementById('ocrText').value='';
+    document.getElementById('ocrText').placeholder='エラーが発生しました。問題を手入力してください。';
+    document.getElementById('ocrBox').style.display='block';
+    document.getElementById('previewActions').style.display='none';
+  }
 };
 window.retryOcr=()=>{document.getElementById('ocrBox').style.display='none';document.getElementById('previewActions').style.display='flex';document.getElementById('ocrLabel').textContent='読み取った問題文（修正できます）';const ta=document.getElementById('ocrText');if(ta){ta.value='';ta.placeholder='ここに問題文が入ります';}window.runOcr();};
-function clean(t){return t.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/[^\S\n]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();}
+function clean(t){return t.replace(/
+/g,'
+').replace(/
+/g,'
+').replace(/[^\S
+]+/g,' ').replace(/
+{3,}/g,'
+
+').trim();}
 function showOv(v,m=''){document.getElementById('ocrOv').classList.toggle('show',v);if(m)document.getElementById('ocrMsgTxt').textContent=m;}
 
 const SYS=`あなたは中学生（1〜3年生）専門の数学の先生「ケイ先生」です。フレンドリーで明るい口調で話します。絵文字を適度に使ってください。問題の解説は必ず：どんな問題か説明→ステップ1〜4→✅ 答え→💡 ポイント の形式で。中学生にわかりやすい言葉を使ってください。`;
 
+async function callAPI(messages) {
+  const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      system: SYS,
+      messages: messages
+    })
+  });
+  if(!res.ok) {
+    const err = await res.json();
+    throw new Error(err.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  return data.content?.[0]?.text || '';
+}
+
 window.solveQuestion=async()=>{
   const text=document.getElementById('ocrText').value.trim();
   if(!text){alert('問題文を入力してください');return;}
-  if(!engine){alert('AI先生が準備中です。少し待ってから試してください。');return;}
-  currentQuestion=text;chatHist=[];document.getElementById('chatMessages').innerHTML='';document.getElementById('btnSave').style.display='none';goScreen('s-chat');
-  addMsg('ai','問題を確認します 📖');addMsg('user',text);addTyping();
-  chatHist.push({role:'user',content:`次の数学の問題を解説してください：\n\n${text}`});
+  currentQuestion=text;chatHist=[];
+  document.getElementById('chatMessages').innerHTML='';
+  document.getElementById('btnSave').style.display='none';
+  goScreen('s-chat');
+  addMsg('ai','問題を確認します 📖');
+  addMsg('user',text);addTyping();
+  const userMsg=[{role:'user',content:`次の数学の問題を解説してください：
+
+${text}`}];
   isGenerating=true;document.getElementById('btnSend').disabled=true;
   try{
-    const reply=await gen(chatHist);removeTyping();addMsg('ai',reply);chatHist.push({role:'assistant',content:reply});if(chatHist.length>40)chatHist=chatHist.slice(-40);
-    document.getElementById('btnSave').style.display='flex';addHist({date:new Date().toLocaleDateString('ja-JP'),q:text.slice(0,40),solved:true});spawnStars(4);
-  }catch(e){removeTyping();addMsg('ai','エラーが発生しました。もう一度試してください。');}
+    const reply=await callAPI(userMsg);
+    removeTyping();addMsg('ai',reply);
+    chatHist=[...userMsg,{role:'assistant',content:reply}];
+    document.getElementById('btnSave').style.display='flex';
+    addHist({date:new Date().toLocaleDateString('ja-JP'),q:text.slice(0,40),solved:true});
+    spawnStars(4);
+  }catch(e){
+    removeTyping();
+    addMsg('ai',`エラーが発生しました😢
+${e.message}`);
+  }
   isGenerating=false;document.getElementById('btnSend').disabled=false;
 };
 
 window.sendMsg=async()=>{
   const inp=document.getElementById('chatInput'),text=inp.value.trim();
-  if(!text||isGenerating)return;if(!engine){addMsg('ai','AI先生が準備中です。');return;}
-  inp.value='';autoResize(inp);addMsg('user',text);chatHist.push({role:'user',content:text});
+  if(!text||isGenerating)return;
+  inp.value='';autoResize(inp);
+  addMsg('user',text);
+  chatHist.push({role:'user',content:text});
   addTyping();isGenerating=true;document.getElementById('btnSend').disabled=true;
-  try{const reply=await gen(chatHist);removeTyping();addMsg('ai',reply);chatHist.push({role:'assistant',content:reply});if(chatHist.length>40)chatHist=chatHist.slice(-40);}
-  catch(e){removeTyping();addMsg('ai','エラーが発生しました。');}
+  try{
+    const reply=await callAPI(chatHist);
+    removeTyping();addMsg('ai',reply);
+    chatHist.push({role:'assistant',content:reply});
+    if(chatHist.length>40)chatHist=chatHist.slice(-40);
+  }catch(e){
+    removeTyping();addMsg('ai',`エラーが発生しました😢
+${e.message}`);
+  }
   isGenerating=false;document.getElementById('btnSend').disabled=false;
 };
-
-async function gen(messages){
-  const msgs=[{role:'system',content:SYS},...messages];let reply='';
-  const chunks=await engine.chat.completions.create({messages:msgs,temperature:0.7,max_tokens:800,stream:true});
-  for await(const chunk of chunks){
-    reply+=(chunk.choices[0]?.delta?.content||'');
-    try{const tel=document.getElementById('typingEl');if(tel){const b=tel.querySelector('.typing-bub');if(b&&reply.length>0)b.innerHTML=`<span style="font-size:12px;color:var(--sub);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(reply.slice(-20))}…</span>`;}}catch(_){}
-  }
-  return reply;
-}
 
 window.saveMistake=()=>{
   if(!currentQuestion)return;const mk=getMk();
   mk.unshift({id:Date.now(),question:currentQuestion,answer:chatHist.find(m=>m.role==='assistant')?.content?.slice(0,200)||'',date:new Date().toLocaleDateString('ja-JP'),reviewed:false});
-  saveMk(mk);document.getElementById('btnSave').style.display='none';addMsg('ai','📌 保存しました。「復習」タブから確認できます。');spawnStars(3);
+  saveMk(mk);document.getElementById('btnSave').style.display='none';
+  addMsg('ai','📌 保存しました。「復習」タブから確認できます。');spawnStars(3);
 };
 
 window.renderMk=()=>{
@@ -470,7 +522,17 @@ window.renderMk=()=>{
   if(!all.length){el.innerHTML=`<div class="empty-state"><span class="empty-icon">📭</span><div class="empty-txt">保存した問題はまだありません。<br>チャット画面の「📌 保存」ボタンで記録できます。</div></div>`;return;}
   el.innerHTML=all.map((m,i)=>`<div class="mistake-card" style="animation:scaleIn .3s ease ${i*.04}s backwards"><div class="mk-hd"><span class="mk-badge">数学</span>${m.reviewed?'<span class="mk-rv">復習済み</span>':''}<span class="mk-date">${m.date}</span></div><div class="mk-q">${esc(m.question.slice(0,80))}</div><div class="mk-acts"><button class="btn-p" style="padding:11px" onclick="window._rv(${m.id})">もう一度解く</button><button class="btn-ic" onclick="window._dl(${m.id})">🗑</button></div></div>`).join('');
 };
-window._rv=id=>{const mk=getMk(),item=mk.find(m=>m.id===id);if(!item)return;item.reviewed=true;saveMk(mk);currentQuestion=item.question;chatHist=[];document.getElementById('chatMessages').innerHTML='';goScreen('s-chat');addMsg('ai',`復習です。\n\n問題：${esc(item.question)}\n\nいっしょに解いてみましょう 💪`);chatHist.push({role:'assistant',content:`問題「${item.question}」の復習をします。`});};
+window._rv=id=>{
+  const mk=getMk(),item=mk.find(m=>m.id===id);if(!item)return;
+  item.reviewed=true;saveMk(mk);currentQuestion=item.question;chatHist=[];
+  document.getElementById('chatMessages').innerHTML='';goScreen('s-chat');
+  addMsg('ai',`復習です。
+
+問題：${esc(item.question)}
+
+いっしょに解いてみましょう 💪`);
+  chatHist.push({role:'assistant',content:`問題「${item.question}」の復習をします。`});
+};
 window._dl=id=>{saveMk(getMk().filter(m=>m.id!==id));renderMk();};
 window.clearAllMistakes=()=>{
   const nav=document.querySelector('#s-mistakes .nav-bar');if(!nav)return;
@@ -494,15 +556,19 @@ function addMsg(role,html){
   d.innerHTML=`${av}<div class="bubble">${role==='ai'?fmt(html):esc(html)}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
 }
-function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/
+/g,'<br>');}
 function fmt(text){
   let t=text.includes('<')?text:esc(text);
   t=t.replace(/ステップ(\d+)[：:]\s*/g,`<div class="step-box"><span class="step-tag">STEP $1</span><br>`);
   t=t.replace(/(<div class="step-box">.*?)(?=<div class="step-box">|✅|💡|$)/gs,'$1</div>');
-  t=t.replace(/(✅[^\n<]+)/g,'<div class="ans-box">$1</div>');
-  t=t.replace(/(💡[^\n<]+)/g,'<div class="point-box">$1</div>');
+  t=t.replace(/(✅[^
+<]+)/g,'<div class="ans-box">$1</div>');
+  t=t.replace(/(💡[^
+<]+)/g,'<div class="point-box">$1</div>');
   t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  t=t.replace(/\n/g,'<br>');return t;
+  t=t.replace(/
+/g,'<br>');return t;
 }
 function addTyping(){const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className='typing-msg';d.id='typingEl';d.innerHTML=`<div class="msg-av">🧮</div><div class="typing-bub"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function removeTyping(){document.getElementById('typingEl')?.remove();}
@@ -513,5 +579,3 @@ window.autoResize=el=>{el.style.height='auto';el.style.height=Math.min(el.scroll
 buildTab('s-upload');
 boot();
 </script>
-</body>
-</html>
