@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Safari診断テスト</title>
+</head>
+<body style="font-family:sans-serif;padding:2rem;background:#f0f2f8;color:#1a1d2e;">
+<h1 style="font-size:22px;margin-bottom:1rem">🔍 Safari診断テスト</h1>
+<div id="log" style="background:#fff;border-radius:12px;padding:1rem;font-size:14px;line-height:2;"></div>
+
+<script>
+function log(msg, ok) {
+  const d = document.getElementById('log');
+  d.innerHTML += `<div style="color:${ok===false?'#ff4b4b':ok===true?'#00c48c':'#333'}">${ok===true?'✅':ok===false?'❌':'⏳'} ${msg}</div>`;
+}
+
+log('JavaScript 基本動作', true);
+log('ES6 テンプレートリテラル: ' + `OK`, true);
+
+// Async/Await テスト
+(async () => {
+  log('async/await テスト開始...');
+  try {
+    await new Promise(r => setTimeout(r, 100));
+    log('async/await 動作確認', true);
+  } catch(e) {
+    log('async/await エラー: ' + e.message, false);
+  }
+
+  // Dynamic import テスト
+  log('dynamic import テスト開始...');
+  try {
+    const mod = await import('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    log('dynamic import 成功', true);
+  } catch(e) {
+    log('dynamic import エラー: ' + e.message, false);
+  }
+
+  // fetch テスト
+  log('fetch テスト開始...');
+  try {
+    const r = await fetch('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js', {method:'HEAD'});
+    log('fetch 成功: status=' + r.status, true);
+  } catch(e) {
+    log('fetch エラー: ' + e.message, false);
+  }
+
+  // ESM import テスト
+  log('esm.run import テスト開始...');
+  try {
+    const mod = await import('https://esm.run/lodash-es/chunk');
+    log('esm.run import 成功', true);
+  } catch(e) {
+    log('esm.run import エラー: ' + e.message, false);
+  }
+
+  log('テスト完了！');
+})();
+</script>
+</body>
+</html>
