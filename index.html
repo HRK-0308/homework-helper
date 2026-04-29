@@ -136,7 +136,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
 .chat-tname{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--dark);}
 .chat-tst{font-size:11px;color:var(--green);font-weight:600;}
 
-.chat-messages{flex:1;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + 130px);display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
+.chat-messages{flex:1;overflow-y:auto;padding:1.25rem 1rem calc(1.25rem + 200px);display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
 .chat-messages::-webkit-scrollbar{width:3px;}
 .chat-messages::-webkit-scrollbar-thumb{background:rgba(79,124,255,.2);border-radius:2px;}
 
@@ -510,7 +510,10 @@ function getSYS(level) {
   const base = `あなたは全科目対応の先生「ヒロ先生」です。数学・英語・理科・社会・国語すべて教えられます。明るく親しみやすく、絶対に否定しない優しい口調で話します。絵文字を適度に使ってください。
 
 【絶対に守るルール】
-・# ## ### などのマークダウン記号は絶対に使わない
+・# ## ### #### などのマークダウン見出しは絶対に使わない
+・--- や *** などの区切り線も絶対に使わない
+・**太字** も使わない（代わりに「！」や絵文字を使う）
+・番号付き問題（【1】【2】など）も見出しにしない、そのまま文章で解説する
 ・--- や *** などの区切り線も使わない
 ・$$ や \frac などのLaTeX記法は絶対に使わない
 ・数式はプレーンテキストで書く（例：3/5、4×5、2²）
