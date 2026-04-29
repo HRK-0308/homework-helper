@@ -206,6 +206,13 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
 .ri-q{flex:1;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dark);}
 .ri-date{font-size:11px;color:var(--sub);flex-shrink:0;}
 
+.btn-quick{
+  padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);
+  background:var(--card);font-family:'Noto Sans JP',sans-serif;
+  font-size:12px;font-weight:600;color:var(--accent);cursor:pointer;
+  white-space:nowrap;box-shadow:var(--shadow-sm);
+}
+.btn-quick:active{opacity:.7;}
 .star-float{position:fixed;pointer-events:none;z-index:9999;animation:starPop 1s ease forwards;font-size:20px;}
 </style>
 </head>
@@ -241,7 +248,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   <div class="upload-body">
     <div class="status-pill">
       <div class="s-dot" id="aiDot"></div>
-      <span id="aiBarTxt" style="font-size:14px;font-weight:600">AI先生 オンライン（クラウドAI搭載）</span>
+      <span id="aiBarTxt" style="font-size:14px;font-weight:600">ヒロ先生 オンライン ✨ 全科目対応</span>
     </div>
 
     <!-- Character hero -->
@@ -274,7 +281,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
       <div class="hero-info">
         <div class="hero-badge">🎓 数学の先生</div>
         <div class="hero-name">ヒロ先生</div>
-        <div class="hero-msg">宿題の写真を撮ってください。<br>ステップで丁寧に解説します 📖</div>
+        <div class="hero-msg">数学・英語・理科・社会・国語なんでもOK！<br>写真を撮って送ってね 📖</div>
       </div>
     </div>
 
@@ -345,6 +352,12 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   <div class="chat-messages" id="chatMessages"></div>
   <div class="chat-footer">
     <button class="btn-save" id="btnSave" onclick="saveMistake()">📌 間違えた問題として保存</button>
+    <div class="quick-btns" id="quickBtns" style="display:none;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="btn-quick" onclick="quickAsk('もっとやさしく説明して！小学生でもわかるように😊')">🌱 もっとやさしく</button>
+      <button class="btn-quick" onclick="quickAsk('別の説明方法で教えて！具体的な例を使って😊')">🔄 別の説明で</button>
+      <button class="btn-quick" onclick="quickAsk('なぜそうなるの？理由を詳しく教えて！')">🤔 なぜ？</button>
+      <button class="btn-quick" onclick="quickAsk('もう一度最初からゆっくり教えて！')">🔁 最初から</button>
+    </div>
     <div class="chat-row">
       <textarea class="chat-ta" id="chatInput" placeholder="質問を入力..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="btn-send" id="btnSend" onclick="sendMsg()">↑</button>
@@ -494,23 +507,29 @@ function clean(t){return t.trim();}
 function showOv(v,m=''){document.getElementById('ocrOv').classList.toggle('show',v);if(m)document.getElementById('ocrMsgTxt').textContent=m;}
 
 function getSYS(level) {
-  const base = `あなたは数学の先生「ヒロ先生」です。明るく親しみやすく、絶対に否定しない優しい口調で話します。絵文字を適度に使ってください。
+  const base = `あなたは全科目対応の先生「ヒロ先生」です。数学・英語・理科・社会・国語すべて教えられます。明るく親しみやすく、絶対に否定しない優しい口調で話します。絵文字を適度に使ってください。
 
-重要：数式は必ずプレーンテキストで書いてください。LaTeX（$や\frac）は絶対に使わないでください。
-例：「4÷(3/5)」「= 4×(5/3)」「= 20/3」のように書く。
+【絶対に守るルール】
+・# ## ### などのマークダウン記号は絶対に使わない
+・--- や *** などの区切り線も使わない
+・$$ や \frac などのLaTeX記法は絶対に使わない
+・数式はプレーンテキストで書く（例：3/5、4×5、2²）
+・**太字** も使わない（強調したい場合は「！」や絵文字を使う）
 
-問題の解説は必ず：
-・どんな問題か1〜2文で説明
-・ステップ1〜4の形式で解く
-・✅ 答え：〇〇 でまとめる
-・💡 ポイント：〇〇 で覚えてほしいことを伝える
+【解説の形式】
+どんな問題か：〇〇の問題だよ！
+ステップ1：〇〇
+ステップ2：〇〇
+ステップ3：〇〇
+✅ 答え：〇〇
+💡 ポイント：〇〇
 
 `;
   const levels = {
-    elementary: base + `生徒は小学生レベルの理解度です。足し算・引き算・掛け算・割り算の言葉から丁寧に説明してください。難しい用語は使わず、日常の言葉で例えながら解説してください。「すごい！」「よく気づいたね！」など褒め言葉を多用してください。`,
-    middle: base + `生徒は中学生レベルです。基本的な概念から丁寧に説明し、なぜそうなるかの理由も伝えてください。難しくなくわかりやすく教えてください。`,
-    high: base + `生徒は高校生レベルです。中学の内容も含めて復習しながら、高校レベルの解説をしてください。`,
-    unknown: base + `生徒の学力レベルがわかりません。まず小学生でもわかるくらい簡単に説明し、「もっと詳しく知りたい？」と聞いてください。絶対に難しい言葉を使わず、やさしく丁寧に教えてください。勉強が久しぶりでも大丈夫と安心させてください。`
+    elementary: base + `生徒は小学生レベルです。とにかくやさしく、日常の言葉で説明してください。「すごい！」「よくできたね！」など褒め言葉をたくさん使ってください。難しい用語は使わず、具体的な例え話を使ってください。`,
+    middle: base + `生徒は中学生レベルです。基本から丁寧に、なぜそうなるかの理由も説明してください。`,
+    high: base + `生徒は高校生レベルです。中学内容も復習しながら、しっかり解説してください。`,
+    unknown: base + `生徒の学力レベルがわかりません。小学生でもわかるくらいやさしく説明し、勉強が久しぶりでも大丈夫と安心させてください。専門用語は使わず、「もっと詳しく聞きたい？」と確認しながら進めてください。`
   };
   return levels[level] || levels.unknown;
 }
@@ -553,6 +572,7 @@ ${text}`}];
     removeTyping();addMsg('ai',reply);
     chatHist=[...userMsg,{role:'assistant',content:reply}];
     document.getElementById('btnSave').style.display='flex';
+    showQuickBtns(true);
     addHist({date:new Date().toLocaleDateString('ja-JP'),q:text.slice(0,40),solved:true});
     spawnStars(4);
   }catch(e){
@@ -631,19 +651,36 @@ function addMsg(role,html){
 function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
 function fmt(text){
-  let t=text.includes('<')?text:esc(text);
-  t=t.replace(/ステップ(\d+)[：:]\s*/g,`<div class="step-box"><span class="step-tag">STEP $1</span><br>`);
-  t=t.replace(/(<div class="step-box">.*?)(?=<div class="step-box">|✅|💡|$)/gs,'$1</div>');
-  t=t.replace(/(✅[^\n<]+)/g,'<div class="ans-box">$1</div>');
-
-  t=t.replace(/(💡[^\n<]+)/g,'<div class="point-box">$1</div>');
-
-  t=t.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-  t=t.replace(/\n/g,'<br>');return t;
-
+  let t=text
+    .replace(/^#{1,6}\s*/gm,'')
+    .replace(/^---+$/gm,'')
+    .replace(/\$\$[\s\S]*?\$\$/g,'')
+    .replace(/\$([^$\n]+)\$/g,'$1')
+    .replace(/\*\*(.*?)\*\*/g,'$1')
+    .replace(/^[-*]\s+/gm,'・')
+    .trim();
+  if(!t.includes('<'))t=esc(t);
+  t=t.replace(/ステップ(\d+)[：:～~]?\s*/g,'<div class="step-box"><span class="step-tag">STEP $1</span><br>');
+  t=t.replace(/(<div class="step-box">[\s\S]*?)(?=<div class="step-box">|✅|💡|$)/g,'$1</div>');
+  t=t.replace(/(✅[^<\n]+)/g,'<div class="ans-box">$1</div>');
+  t=t.replace(/(💡[^<\n]+)/g,'<div class="point-box">$1</div>');
+  t=t.replace(/\n/g,'<br>');
+  return t;
 }
 function addTyping(){const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className='typing-msg';d.id='typingEl';d.innerHTML=`<div class="msg-av">🧮</div><div class="typing-bub"><div class="tdot"></div><div class="tdot"></div><div class="tdot"></div></div>`;msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;}
 function removeTyping(){document.getElementById('typingEl')?.remove();}
+function quickAsk(text){
+  const inp=document.getElementById('chatInput');
+  inp.value=text;
+  sendMsg();
+}
+window.quickAsk=quickAsk;
+
+function showQuickBtns(show){
+  const el=document.getElementById('quickBtns');
+  if(el) el.style.display=show?'flex':'none';
+}
+
 function spawnStars(n=3){const e=['⭐','✨','🌟','💫'];for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star-float';s.textContent=e[Math.floor(Math.random()*e.length)];s.style.left=(20+Math.random()*60)+'vw';s.style.top=(20+Math.random()*40)+'vh';s.style.animationDelay=(i*.1)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1200);}}
 window.handleKey=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
 window.autoResize=el=>{el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';};
