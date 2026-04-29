@@ -213,6 +213,30 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   white-space:nowrap;box-shadow:var(--shadow-sm);
 }
 .btn-quick:active{opacity:.7;}
+.btn-mic{
+  width:44px;height:44px;border-radius:50%;border:1.5px solid var(--border);
+  background:var(--card);font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:var(--shadow-sm);flex-shrink:0;transition:all .2s;
+}
+.btn-mic.recording{
+  background:linear-gradient(135deg,var(--red),#c0392b);
+  border-color:var(--red);animation:pulse 1s infinite;
+  box-shadow:0 0 0 4px rgba(255,75,75,.2);
+}
+.btn-speak{
+  width:36px;height:36px;border-radius:50%;border:none;
+  background:rgba(255,255,255,.2);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;transition:all .2s;
+}
+.btn-speak.speaking{animation:pulse 1s infinite;}
+.svg-figure{
+  background:#f8f9ff;border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);padding:.75rem;
+  margin:8px 0;overflow-x:auto;text-align:center;
+}
+.svg-figure svg{max-width:100%;height:auto;}
 .star-float{position:fixed;pointer-events:none;z-index:9999;animation:starPop 1s ease forwards;font-size:20px;}
 </style>
 </head>
@@ -348,6 +372,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
       <div class="chat-tst">● オフラインで動作中</div>
     </div>
     <button class="btn-nav-txt" onclick="goScreen('s-upload')">新しい問題</button>
+    <button class="btn-speak" id="btnSpeak" onclick="toggleSpeak()" title="読み上げ">🔊</button>
   </div>
   <div class="chat-messages" id="chatMessages"></div>
   <div class="chat-footer">
@@ -359,7 +384,8 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
       <button class="btn-quick" onclick="quickAsk('もう一度最初からゆっくり教えて！')">🔁 最初から</button>
     </div>
     <div class="chat-row">
-      <textarea class="chat-ta" id="chatInput" placeholder="質問を入力..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="btn-mic" id="btnMic" onclick="toggleVoice()" title="音声入力">🎤</button>
+      <textarea class="chat-ta" id="chatInput" placeholder="質問を入力、または🎤をタップ..." rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="btn-send" id="btnSend" onclick="sendMsg()">↑</button>
     </div>
   </div>
@@ -514,6 +540,13 @@ function getSYS(level) {
 ・--- や *** などの区切り線も絶対に使わない
 ・**太字** も使わない（代わりに「！」や絵文字を使う）
 ・番号付き問題（【1】【2】など）も見出しにしない、そのまま文章で解説する
+・図で説明できる場合は、以下の形式でSVG図を埋め込んでください：
+<SVG_FIGURE>
+<svg width="300" height="200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 図の内容 -->
+</svg>
+</SVG_FIGURE>
+数直線・グラフ・図形・表などが必要な時だけSVGを使ってください。
 ・--- や *** などの区切り線も使わない
 ・$$ や \frac などのLaTeX記法は絶対に使わない
 ・数式はプレーンテキストで書く（例：3/5、4×5、2²）
@@ -648,8 +681,11 @@ window.renderParent=()=>{
 function addMsg(role,html){
   const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className=`msg ${role}`;
   const av=role==='ai'?`<div class="msg-av">🧮</div>`:`<div class="msg-av-u">🙋</div>`;
-  d.innerHTML=`${av}<div class="bubble">${role==='ai'?fmt(html):esc(html)}</div>`;
+  const content=role==='ai'?fmt(html):esc(html);
+  d.innerHTML=`${av}<div class="bubble">${content}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
+  // AI返答を読み上げ
+  if(role==='ai') speakText(html);
 }
 function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
 
@@ -685,6 +721,98 @@ function showQuickBtns(show){
 }
 
 function spawnStars(n=3){const e=['⭐','✨','🌟','💫'];for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star-float';s.textContent=e[Math.floor(Math.random()*e.length)];s.style.left=(20+Math.random()*60)+'vw';s.style.top=(20+Math.random()*40)+'vh';s.style.animationDelay=(i*.1)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1200);}}
+// ── 音声入力 ──
+let recognition = null;
+let isRecording = false;
+
+function toggleVoice() {
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('お使いのブラウザは音声入力に対応していません。Safariをお使いください。');
+    return;
+  }
+  if(isRecording) {
+    stopVoice();
+  } else {
+    startVoice();
+  }
+}
+
+function startVoice() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SpeechRecognition();
+  recognition.lang = 'ja-JP';
+  recognition.continuous = false;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('btnMic').classList.add('recording');
+    document.getElementById('btnMic').textContent = '⏹';
+    document.getElementById('chatInput').placeholder = '話してください...🎤';
+  };
+
+  recognition.onresult = (e) => {
+    const transcript = Array.from(e.results).map(r => r[0].transcript).join('');
+    document.getElementById('chatInput').value = transcript;
+    autoResize(document.getElementById('chatInput'));
+  };
+
+  recognition.onend = () => {
+    stopVoice();
+    const text = document.getElementById('chatInput').value.trim();
+    if(text) sendMsg();
+  };
+
+  recognition.onerror = (e) => {
+    stopVoice();
+    if(e.error !== 'no-speech') alert('音声認識エラー: ' + e.error);
+  };
+
+  recognition.start();
+}
+
+function stopVoice() {
+  isRecording = false;
+  if(recognition) recognition.stop();
+  const btn = document.getElementById('btnMic');
+  if(btn) { btn.classList.remove('recording'); btn.textContent = '🎤'; }
+  const inp = document.getElementById('chatInput');
+  if(inp) inp.placeholder = '質問を入力、または🎤をタップ...';
+}
+window.toggleVoice = toggleVoice;
+
+// ── 音声読み上げ ──
+let isSpeaking = false;
+let speakEnabled = false;
+
+function toggleSpeak() {
+  speakEnabled = !speakEnabled;
+  const btn = document.getElementById('btnSpeak');
+  if(btn) {
+    btn.textContent = speakEnabled ? '🔊' : '🔇';
+    btn.classList.toggle('speaking', speakEnabled);
+  }
+  if(!speakEnabled) window.speechSynthesis.cancel();
+}
+
+function speakText(text) {
+  if(!speakEnabled || !window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  // HTMLタグとマークダウン記号を除去してテキスト化
+  const clean = text.replace(/<[^>]+>/g,'').replace(/[#*$`]/g,'').trim();
+  if(!clean) return;
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.lang = 'ja-JP';
+  utt.rate = 0.9;
+  utt.pitch = 1.1;
+  // 日本語の声を優先
+  const voices = window.speechSynthesis.getVoices();
+  const jaVoice = voices.find(v => v.lang.startsWith('ja'));
+  if(jaVoice) utt.voice = jaVoice;
+  window.speechSynthesis.speak(utt);
+}
+window.toggleSpeak = toggleSpeak;
+
 window.handleKey=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();}};
 window.autoResize=el=>{el.style.height='auto';el.style.height=Math.min(el.scrollHeight,120)+'px';};
 
