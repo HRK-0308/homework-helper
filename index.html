@@ -136,7 +136,7 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
 .chat-tname{font-family:'Outfit',sans-serif;font-size:16px;font-weight:700;color:var(--dark);}
 .chat-tst{font-size:11px;color:var(--green);font-weight:600;}
 
-.chat-messages{flex:1;overflow-y:auto;padding:1.25rem 1rem calc(280px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
+.chat-messages{flex:1;overflow-y:auto;padding:1.25rem 1rem calc(320px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px;-webkit-overflow-scrolling:touch;}
 .chat-messages::-webkit-scrollbar{width:3px;}
 .chat-messages::-webkit-scrollbar-thumb{background:rgba(79,124,255,.2);border-radius:2px;}
 
@@ -780,12 +780,13 @@ function addMsg(role,html){
   const av=role==='ai'?`<div class="msg-av">🧮</div>`:`<div class="msg-av-u">🙋</div>`;
   const content=role==='ai'?fmt(html):esc(html);
   // AI返答にはビデオボタンを追加
-  // AI返答のビデオボタンはバブルの外・下に配置
-  const msgId = 'msg_' + Date.now();
   if(role==='ai') {
+    const msgId = 'vm_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    window._videoTexts = window._videoTexts || {};
+    window._videoTexts[msgId] = html;
     d.innerHTML=`${av}<div style="display:flex;flex-direction:column;gap:6px;max-width:82%">
       <div class="bubble">${content}</div>
-      <button class="btn-video-mode-ext" onclick="startVideoMode(${JSON.stringify(html).replace(/'/g, "&#39;")})">▶ 動画で見る</button>
+      <button class="btn-video-mode-ext" onclick="window.startVideoMode(window._videoTexts['${msgId}'])">▶ 動画で見る</button>
     </div>`;
   } else {
     d.innerHTML=`${av}<div class="bubble">${content}</div>`;
