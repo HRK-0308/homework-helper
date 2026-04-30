@@ -292,6 +292,17 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   font-size:11px;font-weight:700;cursor:pointer;
   box-shadow:0 2px 8px rgba(79,124,255,.3);
 }
+.btn-video-mode-ext{
+  align-self:flex-start;
+  padding:8px 16px;border-radius:20px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-family:'Noto Sans JP',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;
+  box-shadow:0 3px 10px rgba(79,124,255,.3);
+  display:flex;align-items:center;gap:5px;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-video-mode-ext:active{opacity:.8;transform:scale(.97);}
 .star-float{position:fixed;pointer-events:none;z-index:9999;animation:starPop 1s ease forwards;font-size:20px;}
 </style>
 </head>
@@ -769,10 +780,16 @@ function addMsg(role,html){
   const av=role==='ai'?`<div class="msg-av">🧮</div>`:`<div class="msg-av-u">🙋</div>`;
   const content=role==='ai'?fmt(html):esc(html);
   // AI返答にはビデオボタンを追加
-  const videoBtn = role==='ai'
-    ? `<button class="btn-video-mode" onclick="startVideoMode(${JSON.stringify(html)})">▶ 動画で見る</button>`
-    : '';
-  d.innerHTML=`${av}<div class="bubble" style="position:relative">${videoBtn}${content}</div>`;
+  // AI返答のビデオボタンはバブルの外・下に配置
+  const msgId = 'msg_' + Date.now();
+  if(role==='ai') {
+    d.innerHTML=`${av}<div style="display:flex;flex-direction:column;gap:6px;max-width:82%">
+      <div class="bubble">${content}</div>
+      <button class="btn-video-mode-ext" onclick="startVideoMode(${JSON.stringify(html).replace(/'/g, "&#39;")})">▶ 動画で見る</button>
+    </div>`;
+  } else {
+    d.innerHTML=`${av}<div class="bubble">${content}</div>`;
+  }
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
   if(role==='ai') speakText(html);
 }
