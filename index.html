@@ -237,6 +237,61 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
   margin:8px 0;overflow-x:auto;text-align:center;
 }
 .svg-figure svg{max-width:100%;height:auto;}
+/* ── VIDEO MODE ── */
+.video-overlay{
+  position:fixed;inset:0;background:rgba(26,29,46,.95);
+  z-index:200;display:none;flex-direction:column;
+  align-items:center;justify-content:center;padding:2rem;
+}
+.video-overlay.show{display:flex;animation:fadeUp .3s ease;}
+.video-char-wrap{
+  width:140px;height:140px;border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:1.5rem;position:relative;
+  box-shadow:0 0 40px rgba(79,124,255,.4);
+}
+.video-char-svg{width:100px;height:100px;}
+.mouth{transition:d .1s;}
+.speaking-ring{
+  position:absolute;inset:-8px;border-radius:50%;
+  border:3px solid rgba(79,124,255,.4);
+  animation:speakRing 1s ease-in-out infinite;
+}
+@keyframes speakRing{
+  0%,100%{transform:scale(1);opacity:.4;}
+  50%{transform:scale(1.08);opacity:.8;}
+}
+.video-text-box{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  border-radius:var(--radius);padding:1.5rem;width:100%;max-width:340px;
+  min-height:120px;text-align:center;
+  font-size:18px;font-weight:600;color:#fff;line-height:1.8;
+  margin-bottom:1.5rem;position:relative;overflow:hidden;
+}
+.video-text-inner{animation:fadeUp .3s ease;}
+.video-progress{
+  display:flex;gap:6px;margin-bottom:1.5rem;
+}
+.vprog-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(255,255,255,.3);transition:background .3s;
+}
+.vprog-dot.active{background:#fff;}
+.btn-video-close{
+  padding:12px 32px;border-radius:30px;border:2px solid rgba(255,255,255,.3);
+  background:transparent;color:#fff;font-family:'Noto Sans JP',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;
+}
+.btn-video-close:active{background:rgba(255,255,255,.1);}
+.btn-video-mode{
+  position:absolute;top:0;right:0;
+  padding:6px 12px;border-radius:20px;border:none;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;font-family:'Noto Sans JP',sans-serif;
+  font-size:11px;font-weight:700;cursor:pointer;
+  box-shadow:0 2px 8px rgba(79,124,255,.3);
+}
 .star-float{position:fixed;pointer-events:none;z-index:9999;animation:starPop 1s ease forwards;font-size:20px;}
 </style>
 </head>
@@ -411,6 +466,37 @@ body{font-family:'Noto Sans JP',-apple-system,sans-serif;background:var(--bg);mi
 </div>
 
 <div class="global-tab" id="globalTab"></div>
+
+<!-- VIDEO MODE OVERLAY -->
+<div class="video-overlay" id="videoOverlay">
+  <div class="video-char-wrap" id="videoCharWrap">
+    <div class="speaking-ring" id="speakingRing"></div>
+    <svg class="video-char-svg" viewBox="0 0 80 80">
+      <circle cx="40" cy="44" r="28" fill="#fde8a0"/>
+      <ellipse cx="13" cy="44" rx="7" ry="9" fill="#fde8a0"/>
+      <ellipse cx="67" cy="44" rx="7" ry="9" fill="#fde8a0"/>
+      <rect x="19" y="15" width="42" height="5" rx="2.5" fill="#2d3561"/>
+      <polygon points="40,7 61,17 40,23 19,17" fill="#3d47a0"/>
+      <line x1="61" y1="17" x2="67" y2="29" stroke="#2d3561" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="67" cy="31" r="3" fill="#ffd93d"/>
+      <ellipse cx="29" cy="45" rx="5.5" ry="6" fill="#fff"/>
+      <ellipse cx="51" cy="45" rx="5.5" ry="6" fill="#fff"/>
+      <circle cx="30" cy="45.5" r="3.5" fill="#2d3561"/>
+      <circle cx="52" cy="45.5" r="3.5" fill="#2d3561"/>
+      <circle cx="31.2" cy="44" r="1.2" fill="#fff"/>
+      <circle cx="53.2" cy="44" r="1.2" fill="#fff"/>
+      <ellipse cx="22" cy="55" rx="5.5" ry="4" fill="#ffaaa5" opacity=".5"/>
+      <ellipse cx="58" cy="55" rx="5.5" ry="4" fill="#ffaaa5" opacity=".5"/>
+      <!-- 口：動的に変わる -->
+      <ellipse id="videoMouth" cx="40" cy="62" rx="6" ry="3" fill="#c0622a"/>
+    </svg>
+  </div>
+  <div class="video-text-box">
+    <div class="video-text-inner" id="videoText">ヒロ先生が解説します！</div>
+  </div>
+  <div class="video-progress" id="videoProgress"></div>
+  <button class="btn-video-close" onclick="closeVideoMode()">✕ 閉じる</button>
+</div>
 
 <div class="ocr-ov" id="ocrOv">
   <span class="ocr-sp">🔍</span>
@@ -682,9 +768,12 @@ function addMsg(role,html){
   const msgs=document.getElementById('chatMessages');const d=document.createElement('div');d.className=`msg ${role}`;
   const av=role==='ai'?`<div class="msg-av">🧮</div>`:`<div class="msg-av-u">🙋</div>`;
   const content=role==='ai'?fmt(html):esc(html);
-  d.innerHTML=`${av}<div class="bubble">${content}</div>`;
+  // AI返答にはビデオボタンを追加
+  const videoBtn = role==='ai'
+    ? `<button class="btn-video-mode" onclick="startVideoMode(${JSON.stringify(html)})">▶ 動画で見る</button>`
+    : '';
+  d.innerHTML=`${av}<div class="bubble" style="position:relative">${videoBtn}${content}</div>`;
   msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;
-  // AI返答を読み上げ
   if(role==='ai') speakText(html);
 }
 function esc(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
@@ -719,6 +808,126 @@ function showQuickBtns(show){
   const el=document.getElementById('quickBtns');
   if(el) el.style.display=show?'flex':'none';
 }
+
+// ── VIDEO MODE ──
+let videoChunks = [];
+let videoIndex = 0;
+let videoTimer = null;
+let isMouthOpen = false;
+let mouthTimer = null;
+
+function startVideoMode(text) {
+  // テキストをHTMLタグ・記号を除去してセンテンスに分割
+  const clean = text
+    .replace(/<[^>]+>/g, '')
+    .replace(/[#*$`\-＃]/g, '')
+    .replace(/ステップ(\d+)[：:]/g, 'ステップ$1：')
+    .trim();
+
+  // 句読点で分割（最大100文字ずつ）
+  const sentences = clean
+    .split(/(?<=[。！？!?\n])|(?<=。)|(?<=！)|(?<=？)/)
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+
+  if(!sentences.length) return;
+
+  videoChunks = sentences;
+  videoIndex = 0;
+
+  // プログレスドット生成（最大10個）
+  const prog = document.getElementById('videoProgress');
+  const dots = Math.min(sentences.length, 10);
+  prog.innerHTML = Array.from({length: dots}, (_,i) =>
+    `<div class="vprog-dot${i===0?' active':''}" id="vdot${i}"></div>`
+  ).join('');
+
+  document.getElementById('videoOverlay').classList.add('show');
+  playVideoChunk(0);
+}
+
+function playVideoChunk(idx) {
+  if(idx >= videoChunks.length) {
+    stopMouthAnim();
+    return;
+  }
+  videoIndex = idx;
+
+  // テキスト表示
+  const textEl = document.getElementById('videoText');
+  textEl.style.animation = 'none';
+  textEl.offsetHeight; // reflow
+  textEl.style.animation = 'fadeUp .3s ease';
+  textEl.textContent = videoChunks[idx];
+
+  // プログレス更新
+  const dotIdx = Math.min(idx, 9);
+  document.querySelectorAll('.vprog-dot').forEach((d,i) => {
+    d.classList.toggle('active', i === dotIdx);
+  });
+
+  // 口パクアニメ開始
+  startMouthAnim();
+
+  // 音声読み上げ
+  if(window.speechSynthesis) {
+    window.speechSynthesis.cancel();
+    const utt = new SpeechSynthesisUtterance(videoChunks[idx]);
+    utt.lang = 'ja-JP';
+    utt.rate = 0.85;
+    utt.pitch = 1.1;
+    const voices = window.speechSynthesis.getVoices();
+    const jaVoice = voices.find(v => v.lang === 'ja-JP') || voices.find(v => v.lang.startsWith('ja'));
+    if(jaVoice) utt.voice = jaVoice;
+
+    utt.onend = () => {
+      stopMouthAnim();
+      setTimeout(() => playVideoChunk(idx + 1), 400);
+    };
+    utt.onerror = () => {
+      stopMouthAnim();
+      // 音声なしでも次へ進む
+      const delay = Math.max(videoChunks[idx].length * 80, 1500);
+      videoTimer = setTimeout(() => playVideoChunk(idx + 1), delay);
+    };
+    window.speechSynthesis.speak(utt);
+  } else {
+    // 音声非対応：文字数ベースでタイミング制御
+    const delay = Math.max(videoChunks[idx].length * 80, 1500);
+    videoTimer = setTimeout(() => {
+      stopMouthAnim();
+      playVideoChunk(idx + 1);
+    }, delay);
+  }
+}
+
+function startMouthAnim() {
+  stopMouthAnim();
+  let open = false;
+  mouthTimer = setInterval(() => {
+    open = !open;
+    const mouth = document.getElementById('videoMouth');
+    if(mouth) {
+      mouth.setAttribute('rx', open ? '8' : '5');
+      mouth.setAttribute('ry', open ? '5' : '2');
+    }
+  }, 150);
+}
+
+function stopMouthAnim() {
+  if(mouthTimer) clearInterval(mouthTimer);
+  const mouth = document.getElementById('videoMouth');
+  if(mouth) { mouth.setAttribute('rx','6'); mouth.setAttribute('ry','3'); }
+}
+
+function closeVideoMode() {
+  document.getElementById('videoOverlay').classList.remove('show');
+  window.speechSynthesis?.cancel();
+  stopMouthAnim();
+  if(videoTimer) clearTimeout(videoTimer);
+}
+window.closeVideoMode = closeVideoMode;
+window.startVideoMode = startVideoMode;
 
 function spawnStars(n=3){const e=['⭐','✨','🌟','💫'];for(let i=0;i<n;i++){const s=document.createElement('div');s.className='star-float';s.textContent=e[Math.floor(Math.random()*e.length)];s.style.left=(20+Math.random()*60)+'vw';s.style.top=(20+Math.random()*40)+'vh';s.style.animationDelay=(i*.1)+'s';document.body.appendChild(s);setTimeout(()=>s.remove(),1200);}}
 // ── 音声入力 ──
